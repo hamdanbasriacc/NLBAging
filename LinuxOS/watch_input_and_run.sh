@@ -28,14 +28,15 @@ cd "$COMFYUI_DIR"
 SERVER_PID=$!
 cd "$SCRIPT_DIR"
 
-# Launch the Python watcher
+# Launch the Python watcher in the background
 echo "👁️ Launching watcher..."
 "$PYTHON_BIN" watch_input_and_run_linux.py &
 
-# Wait for ComfyUI server to be ready
+# Wait for ComfyUI server to be ready by checking HTTP status
+echo -n "⏳ Waiting for ComfyUI server to be ready... "
 RETRIES=60
 for ((i=1; i<=RETRIES; i++)); do
-    if curl -s http://127.0.0.1:8188 | grep -q "ComfyUI version"; then
+    if curl -s --head http://127.0.0.1:8188 | grep -q "200 OK"; then
         echo -e "\r✅ ComfyUI server is ready!                  "
         exit 0
     fi
