@@ -14,16 +14,35 @@ source venv/bin/activate
 
 echo "🐍 Using Python: $(which python)"
 
-# Install requirements
-pip install --quiet --disable-pip-version-check -r LinuxOS/requirements.txt
+# Upgrade pip
+pip install --upgrade pip
 
-# Start ComfyUI server in background
+# Install core dependencies including CUDA-compatible torch
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install other requirements
+pip install -r LinuxOS/requirements.txt
+
+# Start ComfyUI server with GPU in background and log output
 echo "🚀 Starting ComfyUI server..."
-nohup venv/bin/python main.py > LinuxOS/comfyui.log 2>&1 &
+nohup python main.py > LinuxOS/comfyui.log 2>&1 &
 
-# Wait a few seconds to allow server to start
-sleep 3
+# Wait until server is actually ready
+echo "⏳ Waiting for ComfyUI server to be ready..."
+RETRIES=60
+for i in $(seq 1 $RETRIES); do
+  if curl -s http://127.0.0.1:8188 > /dev/null; then
+    echo "✅ ComfyUI server is ready."
+    break
+  fi
+  sleep 1
+done
 
-# Start watcher
+if [ $i -eq $RETRIES ]; then
+  echo "❌ Timeout waiting for server."
+  exit 1
+fi
+
+# Launch watcher
 echo "👁️ Launching watcher..."
 python LinuxOS/watch_input_and_run_linux.py
