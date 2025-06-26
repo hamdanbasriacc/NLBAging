@@ -8,10 +8,9 @@ OUTPUT_DIR="$SCRIPT_DIR/output"
 PYTHON_BIN="$COMFYUI_DIR/venv/bin/python"
 LOG_FILE="$SCRIPT_DIR/comfyui.log"
 
-# Show which Python is used
 echo "🐍 Using Python: $PYTHON_BIN"
 
-# Check if requirements already installed
+# Ensure requirements are installed once
 if [ ! -f "$COMFYUI_DIR/venv/.requirements_installed" ]; then
     echo "📦 Installing Python requirements..."
     "$PYTHON_BIN" -m pip install --upgrade pip
@@ -21,28 +20,36 @@ else
     echo "✅ Python requirements already installed."
 fi
 
-# Launch ComfyUI server in the background and log output
+# Start ComfyUI server
 echo "🚀 Starting ComfyUI server..."
 cd "$COMFYUI_DIR"
 "$PYTHON_BIN" main.py --disable-auto-launch > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 cd "$SCRIPT_DIR"
 
-# Launch the Python watcher in the background
+# Start watcher in background
 echo "👁️ Launching watcher..."
 "$PYTHON_BIN" watch_input_and_run_linux.py &
+WATCHER_PID=$!
 
-# Wait for ComfyUI server to be ready by checking HTTP status
+# Wait for ComfyUI server to be ready
 echo -n "⏳ Waiting for ComfyUI server to be ready... "
 RETRIES=60
 for ((i=1; i<=RETRIES; i++)); do
-    if curl -s --head http://127.0.0.1:8188 | grep -q "200 OK"; then
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8188)
+    if [[ "$STATUS" == "200" ]]; then
         echo -e "\r✅ ComfyUI server is ready!                  "
-        exit 0
+        break
     fi
     echo -ne "\r⏳ Waiting for ComfyUI server to be ready... ($i/$RETRIES)"
     sleep 1
 done
 
-# If it failed, print error
-echo -e "\n❌ Timeout waiting for server. Check $LOG_FILE for details."
+if [[ "$i" -gt "$RETRIES" ]]; then
+    echo -e "\n❌ Timeout waiting for server. Check $LOG_FILE for details."
+    kill $SERVER_PID $WATCHER_PID 2>/dev/null
+    exit 1
+fi
+
+# Wait forever (or Ctrl+C)
+wait
