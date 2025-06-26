@@ -8,34 +8,36 @@ source venv/bin/activate
 
 echo "🐍 Using Python: $(which python)"
 
-# Start ComfyUI server in the background
-echo "🚀 Starting ComfyUI server..."
-python main.py > LinuxOS/comfyui.log 2>&1 &
-SERVER_PID=$!
-
-# Function to check if ComfyUI is ready
-wait_for_server() {
-  local retries=60
-  local count=0
-  while [ $count -lt $retries ]; do
-    if curl --silent http://127.0.0.1:8188/ > /dev/null; then
-      return 0
-    fi
-    echo "⏳ Waiting for ComfyUI server to be ready... ($count/$retries)"
-    sleep 1
-    ((count++))
-  done
-  return 1
-}
-
-# Wait for the server to become ready
-if wait_for_server; then
-  echo "✅ ComfyUI server is ready."
+# Check if requirements are installed (basic check via `safetensors`)
+if ! python -c "import safetensors" &>/dev/null; then
+  echo "📦 Installing required Python packages..."
+  pip install --quiet --disable-pip-version-check -r LinuxOS/requirements.txt
 else
-  echo "❌ Timeout waiting for server. Check comfyui.log for details."
+  echo "✅ Python requirements already installed."
+fi
+
+# Start ComfyUI server in background
+echo "🚀 Starting ComfyUI server..."
+nohup python main.py > LinuxOS/comfyui.log 2>&1 &
+
+# Wait for server readiness with clean line overwrite
+echo -n "⏳ Waiting for ComfyUI server to be ready..."
+for i in {1..60}; do
+  sleep 1
+  if curl -s http://127.0.0.1:8188/queue/status &>/dev/null; then
+    echo -e "\r✅ ComfyUI server is ready.                     "
+    break
+  else
+    echo -ne "\r⏳ Waiting for ComfyUI server to be ready... (${i}/60)"
+  fi
+done
+
+# If timeout
+if ! curl -s http://127.0.0.1:8188/queue/status &>/dev/null; then
+  echo -e "\n❌ Timeout waiting for server. Check LinuxOS/comfyui.log for details."
   exit 1
 fi
 
-# Run the watcher script
+# Launch watcher
 echo "👁️ Launching watcher..."
 python LinuxOS/watch_input_and_run_linux.py
