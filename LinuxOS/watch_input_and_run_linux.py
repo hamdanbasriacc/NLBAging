@@ -16,14 +16,16 @@ COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 def update_workflow(image_name):
+    image_rel_path = f"LinuxOS/input/{image_name}"
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
 
     for node in workflow.values():
         if isinstance(node, dict) and node.get("class_type") == "LoadImage":
             if "inputs" in node and "image" in node["inputs"]:
-                node["inputs"]["image"] = image_name
+                node["inputs"]["image"] = image_rel_path
     return {"prompt": workflow}
+
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
