@@ -11,10 +11,18 @@ INPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
-
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 
 os.makedirs(PROCESSED_DIR, exist_ok=True)
+
+def wait_until_file_is_ready(path, retries=10, delay=1):
+    for _ in range(retries):
+        try:
+            with open(path, "rb"):
+                return True
+        except Exception:
+            time.sleep(delay)
+    return False
 
 def update_workflow(image_name):
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
@@ -87,9 +95,13 @@ class InputImageHandler(FileSystemEventHandler):
         self.processing = True
         while self.queue:
             image_name = self.queue.pop(0)
-            print(f"🚀 Processing: {image_name}")
-            if send_image(image_name):
-                wait_for_output_and_rename(image_name)
+            input_path = os.path.join(INPUT_DIR, image_name)
+            if wait_until_file_is_ready(input_path):
+                print(f"🚀 Processing: {image_name}")
+                if send_image(image_name):
+                    wait_for_output_and_rename(image_name)
+            else:
+                print(f"⚠️ Skipping {image_name}, file not ready.")
         self.processing = False
 
 if __name__ == "__main__":
