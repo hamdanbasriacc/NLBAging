@@ -6,19 +6,19 @@ COMFYUI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 INPUT_DIR="$SCRIPT_DIR/input"
 OUTPUT_DIR="$SCRIPT_DIR/output"
 PYTHON_BIN="$COMFYUI_DIR/venv/bin/python"
-LOG_FILE="$SCRIPT_DIR/comfyui.log"
 
-# Show which Python is used
 echo "🐍 Using Python: $PYTHON_BIN"
 
-# Kill existing ComfyUI server on port 8188
-if lsof -i:8188 -sTCP:LISTEN -t >/dev/null ; then
-    echo "🛑 Existing ComfyUI server detected on port 8188. Terminating..."
+# Kill ComfyUI if running on port 8188 using ss and pkill fallback
+if ss -ltn | grep -q ':8188'; then
+    echo "🛑 Port 8188 in use, killing previous ComfyUI instance..."
     pkill -f "main.py"
     sleep 2
+else
+    echo "✅ Port 8188 is free."
 fi
 
-# Check if requirements already installed
+# Check if requirements are installed
 if [ ! -f "$COMFYUI_DIR/venv/.requirements_installed" ]; then
     echo "📦 Installing Python requirements..."
     "$PYTHON_BIN" -m pip install --upgrade pip
@@ -28,12 +28,12 @@ else
     echo "✅ Python requirements already installed."
 fi
 
-# Launch ComfyUI server in the foreground so logs show in terminal
+# Launch ComfyUI server in foreground
 cd "$COMFYUI_DIR"
 echo "🚀 Starting ComfyUI server..."
 "$PYTHON_BIN" main.py --disable-auto-launch &
 
-# Launch the Python watcher
+# Launch watcher
 cd "$SCRIPT_DIR"
 echo "👁️ We're watching..."
 "$PYTHON_BIN" watch_input_and_run_linux.py
