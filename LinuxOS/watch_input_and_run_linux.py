@@ -11,21 +11,24 @@ INPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
+
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 
+# Ensure folders exist
+os.makedirs(INPUT_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 def update_workflow(image_name):
-    image_abs_path = os.path.abspath(os.path.join(INPUT_DIR, image_name))
+    image_path = os.path.join(INPUT_DIR, image_name)
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
 
     for node in workflow.values():
         if isinstance(node, dict) and node.get("class_type") == "LoadImage":
             if "inputs" in node and "image" in node["inputs"]:
-                node["inputs"]["image"] = image_abs_path
+                node["inputs"]["image"] = image_path  # pass full absolute path
     return {"prompt": workflow}
-
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
@@ -44,7 +47,7 @@ def send_image(image_name):
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    while True:
+    for _ in range(60):
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
