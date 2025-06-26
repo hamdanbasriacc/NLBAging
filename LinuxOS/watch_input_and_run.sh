@@ -33,10 +33,9 @@ echo "👁️ Launching watcher..."
 "$PYTHON_BIN" watch_input_and_run_linux.py &
 
 # Wait for ComfyUI server to be ready
-echo -n "⏳ Waiting for ComfyUI server to be ready... "
 RETRIES=60
 for ((i=1; i<=RETRIES; i++)); do
-    if curl -s http://127.0.0.1:8188; then
+    if curl -s http://127.0.0.1:8188 | grep -q "ComfyUI version"; then
         echo -e "\r✅ ComfyUI server is ready!                  "
         exit 0
     fi

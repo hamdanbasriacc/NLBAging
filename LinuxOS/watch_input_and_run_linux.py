@@ -11,7 +11,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 INPUT_DIR = os.path.join(BASE_DIR, "input")
 PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-WORKFLOW_PATH = os.path.join(BASE_DIR, "user", "default", "workflows", "aging_workflow.json")
+WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 API_URL = "http://127.0.0.1:8188/prompt"
 
 os.makedirs(PROCESSED_DIR, exist_ok=True)
