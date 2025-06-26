@@ -8,7 +8,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 INPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
-OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/output"
+OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
 
