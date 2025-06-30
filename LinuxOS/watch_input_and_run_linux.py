@@ -12,8 +12,24 @@ OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 
+# Ensure directories exist
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+def wait_for_comfyui_server(timeout=300):
+    print("⏳ Waiting for ComfyUI server to be ready...")
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            r = requests.get("http://127.0.0.1:8188")
+            if r.status_code in (200, 404):  # 404 = endpoint not found but server is up
+                print("✅ ComfyUI server is ready.")
+                return
+        except requests.exceptions.ConnectionError:
+            pass
+        time.sleep(1)
+    print("❌ Timeout waiting for ComfyUI server.")
+    exit(1)
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
@@ -42,14 +58,11 @@ def send_image(image_name):
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(90):
+    for _ in range(120):  # up to 2 minutes
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
-        candidates = sorted(
-            [f for f in new_files if f.lower().endswith(('.png', '.jpg', '.jpeg'))],
-            key=lambda x: os.path.getctime(os.path.join(OUTPUT_DIR, x))
-        )
+        candidates = [f for f in new_files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
@@ -61,13 +74,11 @@ def wait_for_output_and_rename(input_filename):
                     fdst.write(content)
                 os.remove(src)
                 os.remove(os.path.join(INPUT_DIR, input_filename))
-                print(f"✅ Output renamed to {input_filename} and input deleted.")
-                return True
+                print(f"✅ Renamed output as {input_filename} and deleted input image.")
+                return
             except Exception as e:
                 print(f"⚠️ Failed during rename/delete: {e}")
-                return False
-    print(f"⏳ Timeout waiting for output for {input_filename}")
-    return False
+                return
 
 class InputImageHandler(FileSystemEventHandler):
     def __init__(self):
@@ -103,8 +114,11 @@ if __name__ == "__main__":
     observer.schedule(handler, INPUT_DIR, recursive=False)
     observer.start()
 
-    # Automatically queue and process any existing images
-    existing_images = [f for f in os.listdir(INPUT_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    wait_for_comfyui_server()
+
+    # Process any images already in input
+    existing_images = [f for f in os.listdir(INPUT_DIR)
+                       if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     if existing_images:
         handler.queue.extend(existing_images)
         handler.process_next()
