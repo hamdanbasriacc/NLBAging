@@ -10,24 +10,19 @@ from watchdog.events import FileSystemEventHandler
 INPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
-PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
-
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 
-# Ensure folders exist
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
-
     for node in workflow.values():
         if isinstance(node, dict) and node.get("class_type") == "LoadImage":
             if "inputs" in node and "image" in node["inputs"]:
-                node["inputs"]["image"] = image_path  # pass full absolute path
+                node["inputs"]["image"] = image_path
     return {"prompt": workflow}
 
 def send_image(image_name):
@@ -47,11 +42,14 @@ def send_image(image_name):
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(60):
+    for _ in range(90):
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
-        candidates = [f for f in new_files if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        candidates = sorted(
+            [f for f in new_files if f.lower().endswith(('.png', '.jpg', '.jpeg'))],
+            key=lambda x: os.path.getctime(os.path.join(OUTPUT_DIR, x))
+        )
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
@@ -62,13 +60,14 @@ def wait_for_output_and_rename(input_filename):
                 with open(dst, "wb") as fdst:
                     fdst.write(content)
                 os.remove(src)
-                os.rename(os.path.join(INPUT_DIR, input_filename),
-                          os.path.join(PROCESSED_DIR, input_filename))
-                print(f"✅ Renamed output as {input_filename} and moved input to processed/")
-                return
+                os.remove(os.path.join(INPUT_DIR, input_filename))
+                print(f"✅ Output renamed to {input_filename} and input deleted.")
+                return True
             except Exception as e:
-                print(f"⚠️ Failed during rename/move: {e}")
-                return
+                print(f"⚠️ Failed during rename/delete: {e}")
+                return False
+    print(f"⏳ Timeout waiting for output for {input_filename}")
+    return False
 
 class InputImageHandler(FileSystemEventHandler):
     def __init__(self):
@@ -103,6 +102,13 @@ if __name__ == "__main__":
     handler = InputImageHandler()
     observer.schedule(handler, INPUT_DIR, recursive=False)
     observer.start()
+
+    # Automatically queue and process any existing images
+    existing_images = [f for f in os.listdir(INPUT_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    if existing_images:
+        handler.queue.extend(existing_images)
+        handler.process_next()
+
     try:
         while True:
             time.sleep(1)
