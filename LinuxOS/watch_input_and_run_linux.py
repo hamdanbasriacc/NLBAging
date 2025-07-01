@@ -12,7 +12,6 @@ OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 
-# Ensure directories exist
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -22,7 +21,7 @@ def wait_for_comfyui_server(timeout=300):
     while time.time() - start < timeout:
         try:
             r = requests.get("http://127.0.0.1:8188")
-            if r.status_code in (200, 404):  # 404 = endpoint not found but server is up
+            if r.status_code in (200, 404):
                 print("✅ ComfyUI server is ready.")
                 return
         except requests.exceptions.ConnectionError:
@@ -31,33 +30,42 @@ def wait_for_comfyui_server(timeout=300):
     print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
+def get_gender_from_filename(filename):
+    lower = filename.lower()
+    if "female" in lower:
+        return "woman"
+    elif "male" in lower:
+        return "man"
+    else:
+        return "person"  # default fallback
+
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
-    gender = "man" if "male" in image_name.lower() else "woman"
-
+    gender = get_gender_from_filename(image_name)
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        workflow = json.load(f)
+        original = json.load(f)
 
-    for node in workflow.values():
-        if isinstance(node, dict):
-            # Update LoadImage with the absolute image path
-            if node.get("class_type") == "LoadImage":
-                if "inputs" in node and "image" in node["inputs"]:
-                    node["inputs"]["image"] = image_path
+    # Deep copy to avoid mutating the original workflow
+    workflow = json.loads(json.dumps(original))
 
-            # Dynamically update positive prompt based on gender
-            if node.get("class_type") == "CLIPTextEncode":
-                prompt = node.get("inputs", {}).get("text", "")
-                if "wise and graceful" in prompt:  # identify the positive prompt
-                    node["inputs"]["text"] = (
-                        f"{gender}, wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, "
-                        "healthy skin, dignified presence, silver streaked hair, calm face, natural aging, "
-                        "elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, "
-                        "same background, same clothing"
-                    )
+    for node in workflow.get("nodes", []):
+        # Update LoadImage node
+        if node.get("type") == "LoadImage":
+            for input_item in node.get("inputs", []):
+                if input_item.get("name") == "image":
+                    input_item["widget"] = None
+                    input_item["link"] = None
+            node["widgets_values"][0] = image_name
+
+        # Inject gender into positive prompt
+        if node.get("type") == "CLIPTextEncode":
+            if node.get("widgets_values"):
+                text = node["widgets_values"][0]
+                if "natural aging" in text:  # crude way to match the positive prompt
+                    if gender not in text:
+                        node["widgets_values"][0] = f"{gender}, " + text
 
     return {"prompt": workflow}
-
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
@@ -76,7 +84,7 @@ def send_image(image_name):
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(120):  # up to 2 minutes
+    for _ in range(120):
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
