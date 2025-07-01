@@ -93,8 +93,7 @@
     "10": {
       "class_type": "LoadImage",
       "inputs": {
-        "widget_0": "F_3.jpg",
-        "widget_1": "image"
+        "image": "/home/hamdan_basri/ComfyUI/LinuxOS/input/DYNAMIC_FILENAME"
       }
     }
   }
