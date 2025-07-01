@@ -44,19 +44,18 @@ def update_workflow(image_name):
     gender = detect_gender_from_filename(image_name)
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        workflow = json.load(f)
+        prompt = json.load(f)
 
-    # Replace the dynamic path
-    for node in workflow["prompt"].values():
+    for node in prompt["prompt"].values():
         if node.get("class_type") == "LoadImage":
             node["inputs"]["image"] = image_path
-
         elif node.get("class_type") == "CLIPTextEncode":
             base_prompt = node["inputs"].get("widget_0", "")
             if gender:
                 node["inputs"]["widget_0"] = f"{base_prompt}, {gender}"
 
-    return workflow
+    return prompt
+
 
 
 
