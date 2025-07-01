@@ -28,14 +28,11 @@
   "27": {
     "class_type": "SaveImage",
     "inputs": {
-      "widget_0": [
-        "8",
-        "IMAGE"
-      ],
       "images": [
         "8",
         "IMAGE"
-      ]
+      ],
+      "filename_prefix": "ComfyUI"
     }
   },
   "14": {
