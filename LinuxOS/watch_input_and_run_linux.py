@@ -12,6 +12,7 @@ OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 
+# Ensure directories exist
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -21,7 +22,7 @@ def wait_for_comfyui_server(timeout=300):
     while time.time() - start < timeout:
         try:
             r = requests.get("http://127.0.0.1:8188")
-            if r.status_code in (200, 404):
+            if r.status_code in (200, 404):  # Server is reachable
                 print("✅ ComfyUI server is ready.")
                 return
         except requests.exceptions.ConnectionError:
@@ -30,53 +31,32 @@ def wait_for_comfyui_server(timeout=300):
     print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
-def get_gender_from_filename(filename):
-    name = filename.lower()
-    if "female" in name:
+def detect_gender_from_filename(filename):
+    lower = filename.lower()
+    if "woman" in lower:
         return "woman"
-    elif "male" in name:
+    elif "man" in lower:
         return "man"
-    return "person"
+    return None
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
-    prompt = {}
+    gender = detect_gender_from_filename(image_name)
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        raw_workflow = json.load(f)
+        workflow = json.load(f)
 
-    for node in raw_workflow.get("nodes", []):
-        node_id = str(node["id"])
-        class_type = node["type"]
-        inputs = {}
-
-        if "inputs" in node:
-            for input_item in node["inputs"]:
-                name = input_item["name"]
-                link = input_item.get("link")
-                if link is not None:
-                    # Find which node and output it connects to
-                    for link_data in raw_workflow.get("links", []):
-                        if link_data[0] == link:
-                            src_node = link_data[1]
-                            src_output_index = link_data[5] if len(link_data) > 5 else 0
-                            inputs[name] = [src_node, src_output_index]
-                            break
-
-        if class_type == "LoadImage":
-            inputs["image"] = image_path  # inject dynamic absolute path
-
-        if class_type == "SaveImage":
-            inputs["filename_prefix"] = os.path.splitext(image_name)[0]  # no extension
-            inputs["images"] = [8, 0]  # from VAEDecode node, image output
-
-        prompt[node_id] = {
-            "class_type": class_type,
-            "inputs": inputs
-        }
-
-    return {"prompt": prompt}
-
+    for node in workflow.values():
+        if isinstance(node, dict):
+            if node.get("class_type") == "LoadImage":
+                if "inputs" in node and "image" in node["inputs"]:
+                    node["inputs"]["image"] = image_path
+            elif node.get("class_type") == "CLIPTextEncode" and "inputs" in node:
+                base_prompt = node["inputs"].get("text", "")
+                if gender:
+                    new_prompt = f"{base_prompt}, {gender}"
+                    node["inputs"]["text"] = new_prompt
+    return {"prompt": workflow}
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
@@ -95,7 +75,7 @@ def send_image(image_name):
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(120):
+    for _ in range(120):  # wait up to 2 minutes
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
