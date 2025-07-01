@@ -23,7 +23,13 @@
         "14",
         "VAE"
       ]
-    }
+    },
+    "outputs": [
+      {
+        "name": "IMAGE",
+        "type": "IMAGE"
+      }
+    ]
   },
   "27": {
     "class_type": "SaveImage",
