@@ -44,25 +44,40 @@ def update_workflow(image_name):
     gender = detect_gender_from_filename(image_name)
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        workflow = json.load(f)
+        original_prompt = json.load(f)
 
-    for node in workflow.get("nodes", []):
-        if node.get("type") == "LoadImage":
-            if "widgets_values" in node and len(node["widgets_values"]) >= 1:
-                node["widgets_values"][0] = image_name
+    prompt = original_prompt.copy()
 
-        elif node.get("type") == "CLIPTextEncode":
-            if "widgets_values" in node and len(node["widgets_values"]) >= 1:
-                base_prompt = node["widgets_values"][0]
-                if gender:
-                    new_prompt = f"{base_prompt}, {gender}"
-                    node["widgets_values"][0] = new_prompt
+    if "prompt" not in prompt:
+        print("❌ Invalid workflow format: missing 'prompt' key")
+        return None
 
-    return {"prompt": workflow}
+    for node in prompt["prompt"].values():
+        if not isinstance(node, dict):
+            continue
+
+        if node.get("class_type") == "LoadImage":
+            inputs = node.get("inputs", {})
+            if "image" in inputs:
+                inputs["image"] = image_path
+
+        elif node.get("class_type") == "CLIPTextEncode":
+            inputs = node.get("inputs", {})
+            text = inputs.get("text", "")
+            if gender:
+                inputs["text"] = f"{text}, {gender}"
+
+    return prompt
+
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
+    if not prompt:
+        print(f"❌ Skipping {image_name} due to invalid prompt structure.")
+        return False
+
     try:
+        print("got prompt")
         response = requests.post(COMFYUI_API_URL, json=prompt)
         if response.status_code == 200:
             print(f"✅ Submitted workflow for {image_name}")
@@ -73,6 +88,7 @@ def send_image(image_name):
     except Exception as e:
         print(f"⚠️ Request failed: {e}")
         return False
+
 
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
