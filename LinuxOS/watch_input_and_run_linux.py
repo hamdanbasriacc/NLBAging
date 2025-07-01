@@ -71,6 +71,11 @@ def update_workflow(image_name):
             if widget_vals and "natural aging" in widget_vals[0].lower():
                 inputs["text"] = f"{gender}, {widget_vals[0]}"
 
+            # Special case for SaveImage node (set filename_prefix and link input)
+        if class_type == "SaveImage":
+            inputs["filename_prefix"] = os.path.splitext(image_name)[0]  # no extension
+            inputs["images"] = ["8", "IMAGE"]  # from VAEDecode node
+
         prompt[str(node["id"])] = {
             "class_type": class_type,
             "inputs": inputs
