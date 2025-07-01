@@ -31,15 +31,33 @@ def wait_for_comfyui_server(timeout=300):
     print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
+def detect_gender_from_filename(filename):
+    lower = filename.lower()
+    if "female" in lower or "woman" in lower:
+        return "woman"
+    elif "male" in lower or "man" in lower:
+        return "man"
+    return None
+
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
+    gender = detect_gender_from_filename(image_name)
+
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
+
     for node in workflow.values():
         if isinstance(node, dict) and node.get("class_type") == "LoadImage":
             if "inputs" in node and "image" in node["inputs"]:
                 node["inputs"]["image"] = image_path
+        elif node.get("class_type") == "CLIPTextEncode":
+            if "inputs" in node and "text" in node["inputs"]:
+                prompt_text = node["inputs"]["text"]
+                if isinstance(prompt_text, str) and "{gender}" in prompt_text and gender:
+                    node["inputs"]["text"] = prompt_text.replace("{gender}", gender)
+
     return {"prompt": workflow}
+
 
 def send_image(image_name):
     prompt = update_workflow(image_name)

@@ -31,7 +31,7 @@
   },
   "6": {
     "inputs": {
-      "text": "old person, realistic wrinkles, aged skin, grey hair, elderly face, same clothing, same background, same pose, detailed face, high resolution\n",
+      "text": "old person, realistic wrinkles, aged skin, grey hair, elderly face, same clothing, same background, same pose, detailed face, high resolution, {gender}",
       "clip": [
         "14",
         1
