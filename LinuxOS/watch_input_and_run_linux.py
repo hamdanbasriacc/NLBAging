@@ -43,6 +43,11 @@ def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
 
+    if gender:
+        print(f"🧠 Detected gender: {gender}")
+    else:
+        print("🧠 Gender not detected — no changes to prompt")
+
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
 
@@ -57,6 +62,7 @@ def update_workflow(image_name):
                     node["inputs"]["text"] = prompt_text.replace("{gender}", gender)
 
     return {"prompt": workflow}
+
 
 
 def send_image(image_name):
