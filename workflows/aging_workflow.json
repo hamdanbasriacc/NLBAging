@@ -2,11 +2,11 @@
   "3": {
     "inputs": {
       "seed": 923089252219130,
-      "steps": 20,
-      "cfg": 8,
+      "steps": 40,
+      "cfg": 8.5,
       "sampler_name": "dpmpp_2m",
       "scheduler": "normal",
-      "denoise": 0.20000000000000004,
+      "denoise": 0.35,
       "model": [
         "14",
         0
@@ -31,7 +31,7 @@
   },
   "6": {
     "inputs": {
-      "text": "old person, realistic wrinkles, aged skin, grey hair, elderly face, same clothing, same background, same pose, detailed face, high resolution, {gender}",
+      "text": "wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing, {gender}",
       "clip": [
         "14",
         1
@@ -44,7 +44,7 @@
   },
   "7": {
     "inputs": {
-      "text": "young, text, watermark, extra limbs, distorted face, glitch, unrealistic, blurry, low quality\n",
+      "text": "young, baby face, low quality, creepy, scary, overly smooth skin, cartoon, lowres, blurry, deformed, unrealistic, harsh shadows, distorted anatomy, age spots, too many wrinkles, lipstick\n",
       "clip": [
         "14",
         1
