@@ -31,34 +31,53 @@ def wait_for_comfyui_server(timeout=300):
     exit(1)
 
 def get_gender_from_filename(filename):
-    lower = filename.lower()
-    if "female" in lower:
+    name = filename.lower()
+    if "female" in name:
         return "woman"
-    elif "male" in lower:
+    elif "male" in name:
         return "man"
-    else:
-        return "person"  # default fallback
+    return "person"
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = get_gender_from_filename(image_name)
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        workflow = json.load(f)
+        workflow_json = json.load(f)
 
-    for node in workflow.get("nodes", []):
-        # Update LoadImage node with image name
-        if node.get("type") == "LoadImage" and "widgets_values" in node:
-            node["widgets_values"][0] = image_name  # only update image filename
+    # Convert from "nodes" array to prompt dict as required by ComfyUI
+    prompt = {}
+    for node in workflow_json.get("nodes", []):
+        class_type = node.get("type")
+        if not class_type:
+            continue  # skip broken node
 
-        # Update the positive prompt (CLIPTextEncode with positive tags)
-        if node.get("type") == "CLIPTextEncode" and "widgets_values" in node:
-            prompt = node["widgets_values"][0]
-            if "natural aging" in prompt:  # positive prompt identifier
-                if gender not in prompt:
-                    node["widgets_values"][0] = f"{gender}, {prompt}"
+        inputs = {}
+        for inp in node.get("inputs", []):
+            if inp["name"] in ["image", "upload"]:
+                if class_type == "LoadImage":
+                    inputs[inp["name"]] = image_path
+            elif "link" in inp and inp["link"] is not None:
+                # This tells ComfyUI to connect this node input from another node
+                for link in workflow_json["links"]:
+                    if link[1] == node["id"] and link[3] == inp["name"]:
+                        inputs[inp["name"]] = [str(link[0]), link[5]]
+                        break
 
-    return {"prompt": workflow}
+        # Update positive prompt with gender info
+        if class_type == "CLIPTextEncode":
+            # Detect positive prompt node (based on text content)
+            widget_vals = node.get("widgets_values", [])
+            if widget_vals and "natural aging" in widget_vals[0].lower():
+                inputs["text"] = f"{gender}, {widget_vals[0]}"
+
+        prompt[str(node["id"])] = {
+            "class_type": class_type,
+            "inputs": inputs
+        }
+
+    return {"prompt": prompt}
+
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
