@@ -42,28 +42,21 @@ def get_gender_from_filename(filename):
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = get_gender_from_filename(image_name)
-    with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        original = json.load(f)
 
-    # Deep copy to avoid mutating the original workflow
-    workflow = json.loads(json.dumps(original))
+    with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
+        workflow = json.load(f)
 
     for node in workflow.get("nodes", []):
-        # Update LoadImage node
-        if node.get("type") == "LoadImage":
-            for input_item in node.get("inputs", []):
-                if input_item.get("name") == "image":
-                    input_item["widget"] = None
-                    input_item["link"] = None
-            node["widgets_values"][0] = image_name
+        # Update LoadImage node with image name
+        if node.get("type") == "LoadImage" and "widgets_values" in node:
+            node["widgets_values"][0] = image_name  # only update image filename
 
-        # Inject gender into positive prompt
-        if node.get("type") == "CLIPTextEncode":
-            if node.get("widgets_values"):
-                text = node["widgets_values"][0]
-                if "natural aging" in text:  # crude way to match the positive prompt
-                    if gender not in text:
-                        node["widgets_values"][0] = f"{gender}, " + text
+        # Update the positive prompt (CLIPTextEncode with positive tags)
+        if node.get("type") == "CLIPTextEncode" and "widgets_values" in node:
+            prompt = node["widgets_values"][0]
+            if "natural aging" in prompt:  # positive prompt identifier
+                if gender not in prompt:
+                    node["widgets_values"][0] = f"{gender}, {prompt}"
 
     return {"prompt": workflow}
 
