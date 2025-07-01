@@ -46,16 +46,18 @@ def update_workflow(image_name):
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
 
-    for node in workflow.values():
-        if isinstance(node, dict):
-            if node.get("class_type") == "LoadImage":
-                if "inputs" in node and "image" in node["inputs"]:
-                    node["inputs"]["image"] = image_path
-            elif node.get("class_type") == "CLIPTextEncode" and "inputs" in node:
-                base_prompt = node["inputs"].get("text", "")
+    for node in workflow.get("nodes", []):
+        if node.get("type") == "LoadImage":
+            if "widgets_values" in node and len(node["widgets_values"]) >= 1:
+                node["widgets_values"][0] = image_name
+
+        elif node.get("type") == "CLIPTextEncode":
+            if "widgets_values" in node and len(node["widgets_values"]) >= 1:
+                base_prompt = node["widgets_values"][0]
                 if gender:
                     new_prompt = f"{base_prompt}, {gender}"
-                    node["inputs"]["text"] = new_prompt
+                    node["widgets_values"][0] = new_prompt
+
     return {"prompt": workflow}
 
 def send_image(image_name):
