@@ -39,26 +39,32 @@ def detect_gender_from_filename(filename):
         return "man"
     return None
 
+def detect_gender_from_filename(filename):
+    lower = filename.lower()
+    if "woman" in lower or "female" in lower:
+        return "woman"
+    elif "man" in lower or "male" in lower:
+        return "man"
+    return None
+
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        prompt = json.load(f)
+        workflow = json.load(f)
 
-    for node in prompt["prompt"].values():
-        if node.get("class_type") == "LoadImage":
-            node["inputs"]["image"] = image_path
+    for node in workflow.values():
+        if isinstance(node, dict) and node.get("class_type") == "LoadImage":
+            if "inputs" in node and "image" in node["inputs"]:
+                node["inputs"]["image"] = image_path
         elif node.get("class_type") == "CLIPTextEncode":
-            base_prompt = node["inputs"].get("widget_0", "")
-            if gender:
-                node["inputs"]["widget_0"] = f"{base_prompt}, {gender}"
+            if "inputs" in node and "widget_0" in node["inputs"]:
+                base_prompt = node["inputs"]["widget_0"]
+                if isinstance(base_prompt, str) and "{gender}" in base_prompt and gender:
+                    node["inputs"]["widget_0"] = base_prompt.replace("{gender}", gender)
 
-    return prompt
-
-
-
-
+    return {"prompt": workflow}
 
 def send_image(image_name):
     prompt = update_workflow(image_name)

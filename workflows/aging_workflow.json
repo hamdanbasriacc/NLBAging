@@ -1,103 +1,101 @@
 {
-  "prompt": {
-    "12": {
-      "class_type": "VAEEncode",
-      "inputs": {
-        "pixels": [
-          "10",
-          "IMAGE"
-        ],
-        "vae": [
-          "14",
-          "VAE"
-        ]
-      }
-    },
-    "8": {
-      "class_type": "VAEDecode",
-      "inputs": {
-        "samples": [
-          "3",
-          "LATENT"
-        ],
-        "vae": [
-          "14",
-          "VAE"
-        ]
-      }
-    },
-    "27": {
-      "class_type": "SaveImage",
-      "inputs": {
-        "widget_0": [
-          "8",
-          "IMAGE"
-        ],
-        "images": [
-          "8",
-          "IMAGE"
-        ]
-      }
-    },
-    "14": {
-      "class_type": "CheckpointLoaderSimple",
-      "inputs": {
-        "widget_0": "v1-5-pruned-emaonly-fp16.safetensors"
-      }
-    },
-    "3": {
-      "class_type": "KSampler",
-      "inputs": {
-        "widget_0": 978429312193628,
-        "widget_1": "randomize",
-        "widget_2": 40,
-        "widget_3": 8.5,
-        "widget_4": "dpmpp_2m",
-        "widget_5": "normal",
-        "widget_6": 0.35,
-        "model": [
-          "14",
-          "VAE"
-        ],
-        "positive": [
-          "6",
-          "CONDITIONING"
-        ],
-        "negative": [
-          "7",
-          "CONDITIONING"
-        ],
-        "latent_image": [
-          "12",
-          "LATENT"
-        ]
-      }
-    },
-    "7": {
-      "class_type": "CLIPTextEncode",
-      "inputs": {
-        "widget_0": "young, baby face, low quality, creepy, scary, overly smooth skin, cartoon, lowres, blurry, deformed, unrealistic, harsh shadows, distorted anatomy, age spots, too many wrinkles, lipstick\n",
-        "clip": [
-          "14",
-          "VAE"
-        ]
-      }
-    },
-    "6": {
-      "class_type": "CLIPTextEncode",
-      "inputs": {
-        "widget_0": "wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing\n",
-        "clip": [
-          "14",
-          "VAE"
-        ]
-      }
-    },
-    "10": {
-      "class_type": "LoadImage",
-      "inputs": {
-        "image": "/home/hamdan_basri/ComfyUI/LinuxOS/input/DYNAMIC_FILENAME"
-      }
+  "12": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "10",
+        "IMAGE"
+      ],
+      "vae": [
+        "14",
+        "VAE"
+      ]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "3",
+        "LATENT"
+      ],
+      "vae": [
+        "14",
+        "VAE"
+      ]
+    }
+  },
+  "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "widget_0": [
+        "8",
+        "IMAGE"
+      ],
+      "images": [
+        "8",
+        "IMAGE"
+      ]
+    }
+  },
+  "14": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "widget_0": "v1-5-pruned-emaonly-fp16.safetensors"
+    }
+  },
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "widget_0": 978429312193628,
+      "widget_1": "randomize",
+      "widget_2": 40,
+      "widget_3": 8.5,
+      "widget_4": "dpmpp_2m",
+      "widget_5": "normal",
+      "widget_6": 0.35,
+      "model": [
+        "14",
+        "VAE"
+      ],
+      "positive": [
+        "6",
+        "CONDITIONING"
+      ],
+      "negative": [
+        "7",
+        "CONDITIONING"
+      ],
+      "latent_image": [
+        "12",
+        "LATENT"
+      ]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "widget_0": "young, baby face, low quality, creepy, scary, overly smooth skin, cartoon, lowres, blurry, deformed, unrealistic, harsh shadows, distorted anatomy, age spots, too many wrinkles, lipstick, {gender}",
+      "clip": [
+        "14",
+        "VAE"
+      ]
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "widget_0": "wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing, {gender}",
+      "clip": [
+        "14",
+        "VAE"
+      ]
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "/home/hamdan_basri/ComfyUI/LinuxOS/input/DYNAMIC_FILENAME"
     }
   }
 }
