@@ -22,7 +22,7 @@ def wait_for_comfyui_server(timeout=300):
     while time.time() - start < timeout:
         try:
             r = requests.get("http://127.0.0.1:8188")
-            if r.status_code in (200, 404):  # Server is reachable
+            if r.status_code in (200, 404):  # 404 = endpoint not found but server is up
                 print("✅ ComfyUI server is ready.")
                 return
         except requests.exceptions.ConnectionError:
@@ -31,49 +31,19 @@ def wait_for_comfyui_server(timeout=300):
     print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
-def detect_gender_from_filename(filename):
-    lower = filename.lower()
-    if "woman" in lower:
-        return "woman"
-    elif "man" in lower:
-        return "man"
-    return None
-
-def detect_gender_from_filename(filename):
-    lower = filename.lower()
-    if "woman" in lower or "female" in lower:
-        return "woman"
-    elif "man" in lower or "male" in lower:
-        return "man"
-    return None
-
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
-    gender = detect_gender_from_filename(image_name)
-
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
-
     for node in workflow.values():
         if isinstance(node, dict) and node.get("class_type") == "LoadImage":
             if "inputs" in node and "image" in node["inputs"]:
                 node["inputs"]["image"] = image_path
-        elif node.get("class_type") == "CLIPTextEncode":
-            if "inputs" in node and "widget_0" in node["inputs"]:
-                base_prompt = node["inputs"]["widget_0"]
-                if isinstance(base_prompt, str) and "{gender}" in base_prompt and gender:
-                    node["inputs"]["widget_0"] = base_prompt.replace("{gender}", gender)
-
     return {"prompt": workflow}
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
-    if not prompt:
-        print(f"❌ Skipping {image_name} due to invalid prompt structure.")
-        return False
-
     try:
-        print("got prompt")
         response = requests.post(COMFYUI_API_URL, json=prompt)
         if response.status_code == 200:
             print(f"✅ Submitted workflow for {image_name}")
@@ -85,11 +55,10 @@ def send_image(image_name):
         print(f"⚠️ Request failed: {e}")
         return False
 
-
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(120):  # wait up to 2 minutes
+    for _ in range(120):  # up to 2 minutes
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
