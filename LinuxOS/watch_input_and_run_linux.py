@@ -40,43 +40,37 @@ def get_gender_from_filename(filename):
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
-    gender = get_gender_from_filename(image_name)
+    prompt = {}
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        workflow_json = json.load(f)
+        raw_workflow = json.load(f)
 
-    # Convert from "nodes" array to prompt dict as required by ComfyUI
-    prompt = {}
-    for node in workflow_json.get("nodes", []):
-        class_type = node.get("type")
-        if not class_type:
-            continue  # skip broken node
-
+    for node in raw_workflow.get("nodes", []):
+        node_id = str(node["id"])
+        class_type = node["type"]
         inputs = {}
-        for inp in node.get("inputs", []):
-            if inp["name"] in ["image", "upload"]:
-                if class_type == "LoadImage":
-                    inputs[inp["name"]] = image_path
-            elif "link" in inp and inp["link"] is not None:
-                # This tells ComfyUI to connect this node input from another node
-                for link in workflow_json["links"]:
-                    if link[1] == node["id"] and link[3] == inp["name"]:
-                        inputs[inp["name"]] = [str(link[0]), link[5]]
-                        break
 
-        # Update positive prompt with gender info
-        if class_type == "CLIPTextEncode":
-            # Detect positive prompt node (based on text content)
-            widget_vals = node.get("widgets_values", [])
-            if widget_vals and "natural aging" in widget_vals[0].lower():
-                inputs["text"] = f"{gender}, {widget_vals[0]}"
+        if "inputs" in node:
+            for input_item in node["inputs"]:
+                name = input_item["name"]
+                link = input_item.get("link")
+                if link is not None:
+                    # Find which node and output it connects to
+                    for link_data in raw_workflow.get("links", []):
+                        if link_data[0] == link:
+                            src_node = link_data[1]
+                            src_output_index = link_data[5] if len(link_data) > 5 else 0
+                            inputs[name] = [src_node, src_output_index]
+                            break
 
-            # Special case for SaveImage node (set filename_prefix and link input)
+        if class_type == "LoadImage":
+            inputs["image"] = image_path  # inject dynamic absolute path
+
         if class_type == "SaveImage":
             inputs["filename_prefix"] = os.path.splitext(image_name)[0]  # no extension
-            inputs["images"] = ["8", "IMAGE"]  # from VAEDecode node
+            inputs["images"] = [8, 0]  # from VAEDecode node, image output
 
-        prompt[str(node["id"])] = {
+        prompt[node_id] = {
             "class_type": class_type,
             "inputs": inputs
         }
