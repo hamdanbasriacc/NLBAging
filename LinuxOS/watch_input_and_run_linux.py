@@ -33,13 +33,31 @@ def wait_for_comfyui_server(timeout=300):
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
+    gender = "man" if "male" in image_name.lower() else "woman"
+
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
+
     for node in workflow.values():
-        if isinstance(node, dict) and node.get("class_type") == "LoadImage":
-            if "inputs" in node and "image" in node["inputs"]:
-                node["inputs"]["image"] = image_path
+        if isinstance(node, dict):
+            # Update LoadImage with the absolute image path
+            if node.get("class_type") == "LoadImage":
+                if "inputs" in node and "image" in node["inputs"]:
+                    node["inputs"]["image"] = image_path
+
+            # Dynamically update positive prompt based on gender
+            if node.get("class_type") == "CLIPTextEncode":
+                prompt = node.get("inputs", {}).get("text", "")
+                if "wise and graceful" in prompt:  # identify the positive prompt
+                    node["inputs"]["text"] = (
+                        f"{gender}, wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, "
+                        "healthy skin, dignified presence, silver streaked hair, calm face, natural aging, "
+                        "elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, "
+                        "same background, same clothing"
+                    )
+
     return {"prompt": workflow}
+
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
