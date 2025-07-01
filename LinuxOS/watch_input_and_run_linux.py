@@ -44,15 +44,9 @@ def update_workflow(image_name):
     gender = detect_gender_from_filename(image_name)
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
-        original_prompt = json.load(f)
+        prompt = json.load(f)
 
-    prompt = original_prompt.copy()
-
-    if "prompt" not in prompt:
-        print("❌ Invalid workflow format: missing 'prompt' key")
-        return None
-
-    for node in prompt["prompt"].values():
+    for node in prompt.values():
         if not isinstance(node, dict):
             continue
 
@@ -63,11 +57,12 @@ def update_workflow(image_name):
 
         elif node.get("class_type") == "CLIPTextEncode":
             inputs = node.get("inputs", {})
-            text = inputs.get("text", "")
+            base_prompt = inputs.get("text", "")
             if gender:
-                inputs["text"] = f"{text}, {gender}"
+                inputs["text"] = f"{base_prompt}, {gender}"
 
-    return prompt
+    return {"prompt": prompt}
+
 
 
 def send_image(image_name):
