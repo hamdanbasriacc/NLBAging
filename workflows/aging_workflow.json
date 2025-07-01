@@ -5,11 +5,11 @@
       "inputs": {
         "pixels": [
           "10",
-          "output"
+          "IMAGE"
         ],
         "vae": [
           "14",
-          "output"
+          "VAE"
         ]
       }
     },
@@ -18,11 +18,11 @@
       "inputs": {
         "samples": [
           "3",
-          "output"
+          "LATENT"
         ],
         "vae": [
           "14",
-          "output"
+          "VAE"
         ]
       }
     },
@@ -32,7 +32,7 @@
         "widget_0": "ComfyUI",
         "images": [
           "8",
-          "output"
+          "IMAGE"
         ]
       }
     },
@@ -54,19 +54,19 @@
         "widget_6": 0.35,
         "model": [
           "14",
-          "output"
+          "VAE"
         ],
         "positive": [
           "6",
-          "output"
+          "CONDITIONING"
         ],
         "negative": [
           "7",
-          "output"
+          "CONDITIONING"
         ],
         "latent_image": [
           "12",
-          "output"
+          "LATENT"
         ]
       }
     },
@@ -76,7 +76,7 @@
         "widget_0": "young, baby face, low quality, creepy, scary, overly smooth skin, cartoon, lowres, blurry, deformed, unrealistic, harsh shadows, distorted anatomy, age spots, too many wrinkles, lipstick\n",
         "clip": [
           "14",
-          "output"
+          "VAE"
         ]
       }
     },
@@ -86,7 +86,7 @@
         "widget_0": "wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing\n",
         "clip": [
           "14",
-          "output"
+          "VAE"
         ]
       }
     },
