@@ -2,14 +2,13 @@
 
 echo "🌀 Aging Program is Starting..."
 
-# Kill any process using port 8188
-if ss -ltn | grep -q ':8188'; then
-    echo "🛑 Port 8188 in use, killing existing process..."
-    pkill -f "main.py"
-    sleep 3
-else
-    echo "✅ Port 8188 is free."
+# Check if port 8188 is in use and kill the process
+PORT=8188
+PID=$(lsof -ti tcp:$PORT)
+if [ -n "$PID" ]; then
+    echo "🛑 Port $PORT is in use by PID $PID. Killing..."
+    kill -9 $PID
 fi
 
-cd "$(dirname "$0")"
+# Launch script
 ./watch_input_and_run.sh
