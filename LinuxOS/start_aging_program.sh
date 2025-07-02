@@ -2,13 +2,16 @@
 
 echo "🌀 Aging Program is Starting..."
 
-# Check if port 8188 is in use and kill the process
+# Use full path to lsof to avoid PATH issues
 PORT=8188
-PID=$(lsof -ti tcp:$PORT)
+PID=$(sudo /usr/sbin/lsof -ti tcp:$PORT)
+
 if [ -n "$PID" ]; then
-    echo "🛑 Port $PORT is in use by PID $PID. Killing..."
-    kill -9 $PID
+    echo "🛑 Port $PORT is in use by PID(s): $PID. Killing..."
+    sudo kill -9 $PID
+else
+    echo "✅ Port $PORT is free."
 fi
 
-# Launch script
-./watch_input_and_run.sh
+# Launch ComfyUI + watcher
+/home/hamdan_basri/ComfyUI/LinuxOS/watch_input_and_run.sh
