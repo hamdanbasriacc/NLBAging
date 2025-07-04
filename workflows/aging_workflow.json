@@ -31,7 +31,7 @@
   },
   "6": {
     "inputs": {
-      "text": "elderly, wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing, black eyes, {gender}",
+      "text": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus",
       "clip": [
         "29",
         1
