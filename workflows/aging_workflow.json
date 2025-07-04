@@ -1,14 +1,14 @@
 {
   "3": {
     "inputs": {
-      "seed": 923089252219130,
+      "seed": 876953490040039,
       "steps": 40,
       "cfg": 8.5,
       "sampler_name": "dpmpp_2m",
       "scheduler": "normal",
       "denoise": 0.35,
       "model": [
-        "14",
+        "29",
         0
       ],
       "positive": [
@@ -31,9 +31,9 @@
   },
   "6": {
     "inputs": {
-      "text": "wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing, {gender}",
+      "text": "elderly, wise and graceful, expressive eyes, high cheekbones, gentle wrinkles, healthy skin, dignified presence, silver streaked hair, calm face, natural aging, elegant appearance, photorealistic, cinematic soft light, ultra detailed skin texture, same background, same clothing, {gender}",
       "clip": [
-        "14",
+        "29",
         1
       ]
     },
@@ -44,9 +44,9 @@
   },
   "7": {
     "inputs": {
-      "text": "young, baby face, low quality, creepy, scary, overly smooth skin, cartoon, lowres, blurry, deformed, unrealistic, harsh shadows, distorted anatomy, age spots, too many wrinkles, lipstick\n",
+      "text": "young, baby face, low quality, creepy, scary, overly smooth skin, cartoon, lowres, blurry, deformed, unrealistic, harsh shadows, distorted anatomy, age spots, too many wrinkles, lipstick, earrings",
       "clip": [
-        "14",
+        "29",
         1
       ]
     },
@@ -73,7 +73,7 @@
   },
   "10": {
     "inputs": {
-      "image": "Male_turban.png"
+      "image": "v3_0783159.jpg"
     },
     "class_type": "LoadImage",
     "_meta": {
@@ -98,7 +98,7 @@
   },
   "14": {
     "inputs": {
-      "ckpt_name": "v1-5-pruned-emaonly-fp16.safetensors"
+      "ckpt_name": "cyberrealistic_v9.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
@@ -116,6 +116,25 @@
     "class_type": "SaveImage",
     "_meta": {
       "title": "Save Image"
+    }
+  },
+  "29": {
+    "inputs": {
+      "lora_name": "bodygrammps.pt",
+      "strength_model": 0.6,
+      "strength_clip": 0.25,
+      "model": [
+        "14",
+        0
+      ],
+      "clip": [
+        "14",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
     }
   }
 }
