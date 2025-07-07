@@ -44,4 +44,4 @@ echo "📤 Watching for generated outputs to upload..."
 
 # Launch auto-copy watcher from uploads folder
 echo "📥 Watching for new uploads to copy into input..."
-"$PYTHON_BIN" auto_copy_to_comfyui_input.py &
+"$PYTHON_BIN" watcher_send_output.py > "$SCRIPT_DIR/watcher_output.log" 2>&1 &
