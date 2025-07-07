@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 # Set working directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -33,7 +33,11 @@ cd "$COMFYUI_DIR"
 echo "🚀 Starting ComfyUI server..."
 "$PYTHON_BIN" main.py --disable-auto-launch &
 
-# Launch watcher
+# Launch input watcher
 cd "$SCRIPT_DIR"
-echo "👁️ We're watching..."
-"$PYTHON_BIN" watch_input_and_run_linux.py
+echo "👁️ Watching for input..."
+"$PYTHON_BIN" watch_input_and_run_linux.py &
+
+# Launch output uploader watcher in background
+echo "📤 Watching for generated outputs to upload..."
+"$PYTHON_BIN" watcher_send_output.py
