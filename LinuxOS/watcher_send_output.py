@@ -37,9 +37,9 @@ def is_file_stable(filepath):
 def upload_image(image_path, target_url):
     try:
         with open(image_path, "rb") as img:
-            files = {"image": (os.path.basename(image_path), img, "image/png")}
-            response = requests.post(target_url, files=files)
-        if response.status_code == 200:
+            headers = {"Content-Type": "image/jpeg"}  # or "image/png" if needed
+            response = requests.put(target_url, data=img, headers=headers)
+        if response.status_code in [200, 201]:
             logging.info(f"✅ Uploaded: {os.path.basename(image_path)}")
             return True
         else:
