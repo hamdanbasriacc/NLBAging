@@ -98,7 +98,7 @@
   },
   "14": {
     "inputs": {
-      "ckpt_name": "cyberrealistic_v9.safetensors"
+      "ckpt_name": "cyberrealistic-dreambooth.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
