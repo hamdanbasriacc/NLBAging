@@ -1,52 +1,50 @@
-
 import os
 import time
 import shutil
-import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-SOURCE_DIR = "/home/brandon_b_tan/Nlb_VideoStitching/pubsub/uploads"
-DEST_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
-VALID_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+# CONFIG
+source_dir = "/home/shared_comfy_data"
+dest_dir = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
+valid_extensions = (".png", ".jpg", ".jpeg", ".webp")
+processed_files = set()
+check_interval = 1  # seconds
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-class ImageCopyHandler(FileSystemEventHandler):
-    def __init__(self):
-        self.processed = set()
-
+class MoveNewImagesHandler(FileSystemEventHandler):
     def on_created(self, event):
+        self.process(event)
+
+    def on_modified(self, event):
+        self.process(event)
+
+    def process(self, event):
         if event.is_directory:
             return
         filepath = event.src_path
-        ext = os.path.splitext(filepath)[1].lower()
-        if ext in VALID_EXTENSIONS:
+        if filepath.lower().endswith(valid_extensions):
             filename = os.path.basename(filepath)
-            if filename in self.processed:
+            if filename in processed_files:
                 return
+            dest_path = os.path.join(dest_dir, filename)
             try:
-                dest_path = os.path.join(DEST_DIR, filename)
-                shutil.copy2(filepath, dest_path)
-                logging.info(f"📥 Copied new image to input: {filename}")
-                self.processed.add(filename)
+                shutil.move(filepath, dest_path)
+                print(f"🚚 Moved {filename} to input folder")
+                processed_files.add(filename)
             except Exception as e:
-                logging.error(f"❌ Failed to copy {filename}: {e}")
+                print(f"❌ Failed to move {filename}: {e}")
 
 if __name__ == "__main__":
-    logging.info(f"👀 Watching for new images in: {SOURCE_DIR}")
-    os.makedirs(DEST_DIR, exist_ok=True)
-    event_handler = ImageCopyHandler()
-    observer = Observer()
-    observer.schedule(event_handler, path=SOURCE_DIR, recursive=False)
-    observer.start()
+    print(f"👁️ Watching folder: {source_dir}")
+    os.makedirs(dest_dir, exist_ok=True)
 
+    event_handler = MoveNewImagesHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path=source_dir, recursive=False)
+    observer.start()
     try:
         while True:
-            time.sleep(1)
+            time.sleep(check_interval)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
