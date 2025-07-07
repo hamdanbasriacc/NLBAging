@@ -3,7 +3,7 @@ import time
 import requests
 import logging
 
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 PROCESSED_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sent")
 TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
 CHECK_INTERVAL = 5  # seconds
