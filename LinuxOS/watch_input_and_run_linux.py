@@ -16,6 +16,12 @@ COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+def clean_filename(filename):
+    lower = filename.lower()
+    if lower.startswith("male_") or lower.startswith("female_"):
+        return filename.split("_", 1)[-1]
+    return filename
+
 def wait_for_comfyui_server(timeout=300):
     print("⏳ Waiting for ComfyUI server to be ready...")
     start = time.time()
@@ -90,7 +96,9 @@ def wait_for_output_and_rename(input_filename):
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
-            dst = os.path.join(OUTPUT_DIR, input_filename)
+            cleaned_name = clean_filename(input_filename)
+            dst = os.path.join(OUTPUT_DIR, cleaned_name)
+
             try:
                 with open(src, "rb") as fsrc:
                     content = fsrc.read()
@@ -98,7 +106,7 @@ def wait_for_output_and_rename(input_filename):
                     fdst.write(content)
                 os.remove(src)
                 os.remove(os.path.join(INPUT_DIR, input_filename))
-                print(f"✅ Renamed output as {input_filename} and deleted input image.")
+                print(f"✅ Renamed output as {cleaned_name} and deleted input image.")
                 return
             except Exception as e:
                 print(f"⚠️ Failed during rename/delete: {e}")

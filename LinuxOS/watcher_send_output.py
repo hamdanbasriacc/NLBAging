@@ -69,8 +69,12 @@ def main():
                 continue
 
             if upload_image(filepath, target_url):
-                os.remove(filepath)
-                logging.info(f"🗑️ Deleted after upload: {filename}")
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    logging.info(f"🗑️ Deleted after upload: {filename}")
+                else:
+                    logging.warning(f"⚠️ Tried to delete, but file already missing: {filename}")
+
         time.sleep(CHECK_INTERVAL)
 
 if __name__ == "__main__":
