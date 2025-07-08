@@ -38,10 +38,10 @@ cd "$SCRIPT_DIR"
 echo "👁️ Watching for input..."
 "$PYTHON_BIN" watch_input_and_run_linux.py &
 
-# Launch output uploader watcher
-echo "📤 Watching for generated outputs to upload..."
-"$PYTHON_BIN" watcher_send_output.py &
-
 # Launch auto-copy watcher from uploads folder
 echo "📥 Watching for new uploads to copy into input..."
+"$PYTHON_BIN" auto_copy_to_comfyui_input.py &
+
+# Launch output uploader watcher
+echo "📤 Watching for generated outputs to upload..."
 "$PYTHON_BIN" watcher_send_output.py > "$SCRIPT_DIR/watcher_output.log" 2>&1 &
