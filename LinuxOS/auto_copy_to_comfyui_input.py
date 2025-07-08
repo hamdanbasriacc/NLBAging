@@ -1,50 +1,70 @@
 import os
 import time
 import shutil
+import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# CONFIG
-source_dir = "/home/shared_comfy_data"
-dest_dir = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
-valid_extensions = (".png", ".jpg", ".jpeg", ".webp")
-processed_files = set()
-check_interval = 1  # seconds
+SOURCE_DIR = "/home/shared_comfy_data"
+DEST_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
+STABILITY_WAIT = 2  # seconds between size checks
+SUPPORTED_EXT = (".png", ".jpg", ".jpeg")
 
-class MoveNewImagesHandler(FileSystemEventHandler):
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+def is_file_stable(filepath):
+    try:
+        size1 = os.path.getsize(filepath)
+        time.sleep(STABILITY_WAIT)
+        size2 = os.path.getsize(filepath)
+        return size1 == size2
+    except Exception:
+        return False
+
+class UploadWatcher(FileSystemEventHandler):
     def on_created(self, event):
-        self.process(event)
-
-    def on_modified(self, event):
-        self.process(event)
-
-    def process(self, event):
         if event.is_directory:
             return
-        filepath = event.src_path
-        if filepath.lower().endswith(valid_extensions):
-            filename = os.path.basename(filepath)
-            if filename in processed_files:
-                return
-            dest_path = os.path.join(dest_dir, filename)
-            try:
-                shutil.move(filepath, dest_path)
-                print(f"🚚 Moved {filename} to input folder")
-                processed_files.add(filename)
-            except Exception as e:
-                print(f"❌ Failed to move {filename}: {e}")
+
+        filename = os.path.basename(event.src_path)
+        if not filename.lower().endswith(SUPPORTED_EXT):
+            return
+
+        source_path = os.path.join(SOURCE_DIR, filename)
+        dest_path = os.path.join(DEST_DIR, filename)
+        done_flag = os.path.join(DEST_DIR, filename + ".done")
+
+        if os.path.exists(done_flag):
+            logging.info(f"⏭️ Skipping {filename}, already processed.")
+            return
+
+        logging.info(f"📥 Detected new image: {filename}, checking stability...")
+        if not is_file_stable(source_path):
+            logging.warning(f"⚠️ Skipping unstable file: {filename}")
+            return
+
+        try:
+            shutil.move(source_path, dest_path)
+            logging.info(f"🚚 Moved {filename} to input folder.")
+        except Exception as e:
+            logging.error(f"❌ Failed to move {filename}: {e}")
 
 if __name__ == "__main__":
-    print(f"👁️ Watching folder: {source_dir}")
-    os.makedirs(dest_dir, exist_ok=True)
+    os.makedirs(SOURCE_DIR, exist_ok=True)
+    os.makedirs(DEST_DIR, exist_ok=True)
 
-    event_handler = MoveNewImagesHandler()
+    logging.info(f"👁️ Watching folder: {SOURCE_DIR}")
+    event_handler = UploadWatcher()
     observer = Observer()
-    observer.schedule(event_handler, path=source_dir, recursive=False)
+    observer.schedule(event_handler, SOURCE_DIR, recursive=False)
     observer.start()
+
     try:
         while True:
-            time.sleep(check_interval)
+            time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()

@@ -4,12 +4,15 @@ import requests
 import logging
 
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
-PROCESSED_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sent")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROCESSED_DIR = os.path.join(SCRIPT_DIR, "sent")
 TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
+DONE_FLAG_FILE = os.path.join(SCRIPT_DIR, "upload_done.flag")
+
 CHECK_INTERVAL = 5  # seconds
 STABILITY_WAIT = 2  # seconds between size checks
 
-# Setup logging
+# Setup logging to terminal only
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
@@ -37,7 +40,7 @@ def is_file_stable(filepath):
 def upload_image(image_path, target_url):
     try:
         with open(image_path, "rb") as img:
-            headers = {"Content-Type": "image/jpeg"}  # or "image/png" if needed
+            headers = {"Content-Type": "image/jpeg"}  # Adjust based on format
             response = requests.put(target_url, data=img, headers=headers)
         if response.status_code in [200, 201]:
             logging.info(f"✅ Uploaded: {os.path.basename(image_path)}")
@@ -69,11 +72,19 @@ def main():
                 continue
 
             if upload_image(filepath, target_url):
-                if os.path.exists(filepath):
+                try:
                     os.remove(filepath)
                     logging.info(f"🗑️ Deleted after upload: {filename}")
-                else:
+                except FileNotFoundError:
                     logging.warning(f"⚠️ Tried to delete, but file already missing: {filename}")
+
+                # Write completion flag for auto_copy script
+                try:
+                    with open(DONE_FLAG_FILE, "w") as flag:
+                        flag.write("done")
+                    logging.info(f"✅ Created flag: {DONE_FLAG_FILE}")
+                except Exception as e:
+                    logging.error(f"❌ Failed to create done flag: {e}")
 
         time.sleep(CHECK_INTERVAL)
 
