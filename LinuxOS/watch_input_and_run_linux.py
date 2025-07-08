@@ -116,16 +116,32 @@ class InputImageHandler(FileSystemEventHandler):
     def __init__(self):
         self.queue = []
         self.processing = False
+        self.last_processed = {}
 
     def on_created(self, event):
+        self._handle_file(event)
+
+    def on_modified(self, event):
+        self._handle_file(event)
+
+    def _handle_file(self, event):
         if event.is_directory:
             return
         filename = os.path.basename(event.src_path)
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            if filename not in self.queue:
-                self.queue.append(filename)
-                print(f"📸 New image queued: {filename}")
-                self.process_next()
+        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            return
+
+        now = time.time()
+        last_time = self.last_processed.get(filename, 0)
+        # Prevent re-processing the same file too quickly
+        if now - last_time < 3:
+            return
+
+        self.last_processed[filename] = now
+        if filename not in self.queue:
+            self.queue.append(filename)
+            print(f"📸 New or updated image queued: {filename}")
+            self.process_next()
 
     def process_next(self):
         if self.processing or not self.queue:
