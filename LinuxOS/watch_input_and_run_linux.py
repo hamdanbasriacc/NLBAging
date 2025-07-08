@@ -139,16 +139,17 @@ class InputImageHandler(FileSystemEventHandler):
         if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             return
 
-        now = time.time()
-        last_time = self.last_processed.get(filename, 0)
-        if now - last_time < 3:
-            return
-
-        self.last_processed[filename] = now
+        # Always queue the file again if it shows up — even if same name
         if filename not in self.queue:
             self.queue.append(filename)
             print(f"📸 New or updated image queued: {filename}")
             self.process_next()
+        else:
+            # Even if in queue, we check if the file was re-written
+            print(f"♻️ File {filename} already in queue, re-queueing due to overwrite.")
+            self.queue.remove(filename)
+            self.queue.append(filename)
+
 
     def process_next(self):
         if self.processing or not self.queue:
