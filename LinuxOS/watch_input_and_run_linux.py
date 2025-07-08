@@ -46,15 +46,6 @@ def detect_gender_from_filename(filename):
         return "man"
     return None
 
-def is_file_stable(filepath):
-    try:
-        size1 = os.path.getsize(filepath)
-        time.sleep(STABILITY_WAIT)
-        size2 = os.path.getsize(filepath)
-        return size1 == size2
-    except Exception:
-        return False
-
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
@@ -138,9 +129,14 @@ class InputImageHandler(FileSystemEventHandler):
         if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             return
 
-        print(f"📸 New or updated image queued: {filename}")
-        self.queue.append(filename)
-        self.process_next()
+        if filename not in self.queue:
+            self.queue.append(filename)
+            print(f"📸 New or updated image queued: {filename}")
+            self.process_next()
+        else:
+            print(f"♻️ File {filename} already in queue, re-queueing due to overwrite.")
+            self.queue.remove(filename)
+            self.queue.append(filename)
 
     def process_next(self):
         if self.processing or not self.queue:
@@ -151,15 +147,15 @@ class InputImageHandler(FileSystemEventHandler):
             input_path = os.path.join(INPUT_DIR, image_name)
             print(f"🚀 Processing: {image_name}")
 
-            wait_attempts = 5
-            for attempt in range(wait_attempts):
-                if is_file_stable(input_path):
-                    break
-                print(f"⏳ Waiting for {image_name} to finish writing... ({attempt+1}/{wait_attempts})")
+            while not os.path.exists(input_path):
                 time.sleep(STABILITY_WAIT)
-            else:
-                print(f"⚠️ Skipping unstable file: {image_name}")
-                continue
+
+            stable = False
+            while not stable:
+                size1 = os.path.getsize(input_path)
+                time.sleep(STABILITY_WAIT)
+                size2 = os.path.getsize(input_path)
+                stable = size1 == size2
 
             if send_image(image_name):
                 wait_for_output_and_rename(image_name)
