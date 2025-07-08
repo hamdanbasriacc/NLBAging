@@ -11,6 +11,7 @@ INPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
+STABILITY_WAIT = 2  # seconds
 
 # Ensure directories exist
 os.makedirs(INPUT_DIR, exist_ok=True)
@@ -28,7 +29,7 @@ def wait_for_comfyui_server(timeout=300):
     while time.time() - start < timeout:
         try:
             r = requests.get("http://127.0.0.1:8188")
-            if r.status_code in (200, 404):  # 404 = endpoint not found but server is up
+            if r.status_code in (200, 404):
                 print("✅ ComfyUI server is ready.")
                 return
         except requests.exceptions.ConnectionError:
@@ -44,6 +45,15 @@ def detect_gender_from_filename(filename):
     elif "male" in lower or "man" in lower:
         return "man"
     return None
+
+def is_file_stable(filepath):
+    try:
+        size1 = os.path.getsize(filepath)
+        time.sleep(STABILITY_WAIT)
+        size2 = os.path.getsize(filepath)
+        return size1 == size2
+    except Exception:
+        return False
 
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
@@ -69,8 +79,6 @@ def update_workflow(image_name):
 
     return {"prompt": workflow}
 
-
-
 def send_image(image_name):
     prompt = update_workflow(image_name)
     try:
@@ -88,7 +96,7 @@ def send_image(image_name):
 def wait_for_output_and_rename(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(300):  # up to 2 minutes
+    for _ in range(300):
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
@@ -133,7 +141,6 @@ class InputImageHandler(FileSystemEventHandler):
 
         now = time.time()
         last_time = self.last_processed.get(filename, 0)
-        # Prevent re-processing the same file too quickly
         if now - last_time < 3:
             return
 
@@ -149,7 +156,19 @@ class InputImageHandler(FileSystemEventHandler):
         self.processing = True
         while self.queue:
             image_name = self.queue.pop(0)
+            input_path = os.path.join(INPUT_DIR, image_name)
             print(f"🚀 Processing: {image_name}")
+
+            wait_attempts = 5
+            for attempt in range(wait_attempts):
+                if is_file_stable(input_path):
+                    break
+                print(f"⏳ Waiting for {image_name} to finish writing... ({attempt+1}/{wait_attempts})")
+                time.sleep(STABILITY_WAIT)
+            else:
+                print(f"⚠️ Skipping unstable file: {image_name}")
+                continue
+
             if send_image(image_name):
                 wait_for_output_and_rename(image_name)
         self.processing = False
@@ -164,7 +183,6 @@ if __name__ == "__main__":
 
     wait_for_comfyui_server()
 
-    # Process any images already in input
     existing_images = [f for f in os.listdir(INPUT_DIR)
                        if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     if existing_images:
