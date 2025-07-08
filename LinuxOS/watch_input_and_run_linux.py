@@ -7,7 +7,7 @@ import requests
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-INPUT_DIR = "/home/hamdan_basri/ComfyUI/LinuxOS/input"
+INPUT_DIR = "/home/shared_comfy_data"
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"

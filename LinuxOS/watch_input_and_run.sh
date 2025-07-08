@@ -39,8 +39,8 @@ echo "👁️ Watching for input..."
 "$PYTHON_BIN" watch_input_and_run_linux.py &
 
 # Launch auto-copy watcher from uploads folder
-echo "📥 Watching for new uploads to copy into input..."
-"$PYTHON_BIN" auto_copy_to_comfyui_input.py &
+# echo "📥 Watching for new uploads to copy into input..."
+# "$PYTHON_BIN" auto_copy_to_comfyui_input.py &
 
 # Launch output uploader watcher
 echo "📤 Watching for generated outputs to upload..."
