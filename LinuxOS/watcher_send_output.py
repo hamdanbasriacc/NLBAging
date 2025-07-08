@@ -88,5 +88,12 @@ def main():
 
         time.sleep(CHECK_INTERVAL)
 
+        if os.path.exists(DONE_FLAG_FILE):
+            try:
+                os.remove(DONE_FLAG_FILE)
+                logging.info(f"✅ Removed flag: {DONE_FLAG_FILE}")
+            except Exception as e:
+                logging.error(f"❌ Failed to remove flag: {e}")
+
 if __name__ == "__main__":
     main()
