@@ -44,4 +44,4 @@ echo "📥 Watching for new uploads to copy into input..."
 
 # Launch output uploader watcher
 echo "📤 Watching for generated outputs to upload..."
-"$PYTHON_BIN" watcher_send_output.py > "$SCRIPT_DIR/watcher_output.log" 2>&1 &
+"$PYTHON_BIN" watcher_send_output.py &
