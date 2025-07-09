@@ -3,10 +3,7 @@
 import os
 import time
 import json
-import threading
 import requests
-import unicodedata
-from PIL import Image
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -14,41 +11,24 @@ INPUT_DIR = "/home/shared_comfy_data"
 OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
-STABILITY_WAIT = 2  # seconds
 
+# Ensure directories exist
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def clean_filename(filename):
-    # Extract everything starting from 'ticket-' to keep UUID
-    match = re.search(r'(ticket-[a-zA-Z0-9\\-_.]+)', filename, re.IGNORECASE)
-    if match:
-        return match.group(1)
-    # fallback: remove gender prefix if any
-    lower = filename.lower()
-    if lower.startswith("male_") or lower.startswith("female_"):
-        return filename.split("_", 1)[-1]
-    return filename
-
-def safe_filename(name):
-    try:
-        return unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
-    except Exception:
-        return "output_image.jpg"
-
 def wait_for_comfyui_server(timeout=300):
-    print("\u23f3 Waiting for ComfyUI server to be ready...")
+    print("⏳ Waiting for ComfyUI server to be ready...")
     start = time.time()
     while time.time() - start < timeout:
         try:
             r = requests.get("http://127.0.0.1:8188")
-            if r.status_code in (200, 404):
-                print("\u2705 ComfyUI server is ready.")
+            if r.status_code in (200, 404):  # 404 = endpoint not found but server is up
+                print("✅ ComfyUI server is ready.")
                 return
         except requests.exceptions.ConnectionError:
             pass
         time.sleep(1)
-    print("\u274c Timeout waiting for ComfyUI server.")
+    print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
 def detect_gender_from_filename(filename):
@@ -59,23 +39,14 @@ def detect_gender_from_filename(filename):
         return "man"
     return None
 
-def is_valid_image(path):
-    try:
-        with Image.open(path) as img:
-            img.verify()
-        return True
-    except Exception as e:
-        print(f"\u26a0\ufe0f Invalid image: {path} — {e}")
-        return False
-
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
 
     if gender:
-        print(f"\U0001f9e0 Detected gender: {gender}")
+        print(f"🧠 Detected gender: {gender}")
     else:
-        print("\U0001f9e0 Gender not detected — no changes to prompt")
+        print("🧠 Gender not detected — no changes to prompt")
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
@@ -92,24 +63,26 @@ def update_workflow(image_name):
 
     return {"prompt": workflow}
 
+
+
 def send_image(image_name):
     prompt = update_workflow(image_name)
     try:
         response = requests.post(COMFYUI_API_URL, json=prompt)
         if response.status_code == 200:
-            print(f"\u2705 Submitted workflow for {image_name}")
+            print(f"✅ Submitted workflow for {image_name}")
             return True
         else:
-            print(f"\u274c Submission failed: {response.status_code} {response.text}")
+            print(f"❌ Submission failed: {response.status_code} {response.text}")
             return False
     except Exception as e:
-        print(f"\u26a0\ufe0f Request failed: {e}")
+        print(f"⚠️ Request failed: {e}")
         return False
 
 def wait_for_output_and_rename(input_filename):
-    print(f"\ud83d\udd0d Waiting for output for: {input_filename}")
+    print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(300):
+    for _ in range(300):  # up to 2 minutes
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
@@ -117,18 +90,19 @@ def wait_for_output_and_rename(input_filename):
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
-            cleaned_name = safe_filename(clean_filename(input_filename))
-            dst = os.path.join(OUTPUT_DIR, cleaned_name)
-
+            dst = os.path.join(OUTPUT_DIR, input_filename)
             try:
-                os.rename(src, dst)
+                with open(src, "rb") as fsrc:
+                    content = fsrc.read()
+                with open(dst, "wb") as fdst:
+                    fdst.write(content)
+                os.remove(src)
                 os.remove(os.path.join(INPUT_DIR, input_filename))
-                print(f"\u2705 Renamed output as {cleaned_name} and deleted input image.")
+                print(f"✅ Renamed output as {input_filename} and deleted input image.")
                 return
             except Exception as e:
-                print(f"\u26a0\ufe0f Failed during rename/delete: {e}")
+                print(f"⚠️ Failed during rename/delete: {e}")
                 return
-    print(f"\u26a0\ufe0f Output timeout for: {input_filename}")
 
 class InputImageHandler(FileSystemEventHandler):
     def __init__(self):
@@ -136,80 +110,25 @@ class InputImageHandler(FileSystemEventHandler):
         self.processing = False
 
     def on_created(self, event):
-        self._handle_file(event)
-
-    def on_modified(self, event):
-        self._handle_file(event)
-
-    def _handle_file(self, event):
         if event.is_directory:
             return
-
         filename = os.path.basename(event.src_path)
-
-        try:
-            filename.encode('utf-8')
-        except UnicodeEncodeError:
-            print(f"\u26a0\ufe0f Skipping file with problematic filename: {filename}")
-            return
-
-        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            return
-
-        if filename not in self.queue:
-            self.queue.append(filename)
-            print(f"📸 New or updated image queued: {filename}")
-            self.process_next()
-        else:
-            print(f"♻️ File {filename} already in queue, re-queueing due to overwrite.")
-            self.queue.remove(filename)
-            self.queue.append(filename)
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            if filename not in self.queue:
+                self.queue.append(filename)
+                print(f"📸 New image queued: {filename}")
+                self.process_next()
 
     def process_next(self):
-        if self.processing:
+        if self.processing or not self.queue:
             return
-        if not self.queue:
-            return
-
         self.processing = True
         while self.queue:
             image_name = self.queue.pop(0)
-            input_path = os.path.join(INPUT_DIR, image_name)
             print(f"🚀 Processing: {image_name}")
-
-            for _ in range(30):
-                if os.path.exists(input_path):
-                    break
-                time.sleep(STABILITY_WAIT)
-            else:
-                print(f"\u26a0\ufe0f Skipping missing input file: {input_path}")
-                continue
-
-            stable = False
-            for _ in range(30):
-                size1 = os.path.getsize(input_path)
-                time.sleep(STABILITY_WAIT)
-                size2 = os.path.getsize(input_path)
-                if size1 == size2:
-                    stable = True
-                    break
-            if not stable:
-                print(f"\u26a0\ufe0f File did not stabilize: {input_path}")
-                continue
-
-            if not is_valid_image(input_path):
-                continue
-
             if send_image(image_name):
                 wait_for_output_and_rename(image_name)
-
         self.processing = False
-
-def retry_queue(handler):
-    while True:
-        if not handler.processing and handler.queue:
-            handler.process_next()
-        time.sleep(5)
 
 if __name__ == "__main__":
     print(f"👀 Watching input: {INPUT_DIR}")
@@ -221,13 +140,12 @@ if __name__ == "__main__":
 
     wait_for_comfyui_server()
 
+    # Process any images already in input
     existing_images = [f for f in os.listdir(INPUT_DIR)
                        if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     if existing_images:
         handler.queue.extend(existing_images)
         handler.process_next()
-
-    threading.Thread(target=retry_queue, args=(handler,), daemon=True).start()
 
     try:
         while True:
