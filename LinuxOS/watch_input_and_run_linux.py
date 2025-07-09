@@ -15,7 +15,6 @@ WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
 STABILITY_WAIT = 2  # seconds
-UPLOAD_TIMEOUT = 5  # seconds for upload retry wait
 
 # === Logging Setup ===
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -24,7 +23,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# === ComfyUI Wait ===
 def wait_for_comfyui_server(timeout=300):
     print("⏳ Waiting for ComfyUI server to be ready...")
     start = time.time()
@@ -40,7 +38,6 @@ def wait_for_comfyui_server(timeout=300):
     print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
-# === Gender Detection ===
 def detect_gender_from_filename(filename):
     lower = filename.lower()
     if "female" in lower or "woman" in lower:
@@ -49,7 +46,6 @@ def detect_gender_from_filename(filename):
         return "man"
     return None
 
-# === Workflow Preparer ===
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
@@ -74,7 +70,6 @@ def update_workflow(image_name):
 
     return {"prompt": workflow}
 
-# === Target URL Reader ===
 def get_target_url():
     try:
         with open(TARGET_URL_FILE, "r") as f:
@@ -85,7 +80,6 @@ def get_target_url():
         logging.warning(f"⚠️ Failed to read target URL: {e}")
     return None
 
-# === Upload Handler ===
 def is_file_stable(filepath):
     try:
         size1 = os.path.getsize(filepath)
@@ -109,7 +103,6 @@ def upload_image(image_path, target_url):
         logging.error(f"❌ Exception during upload: {e}")
     return False
 
-# === Image Submission + Output Wait + Upload + Cleanup ===
 def send_image(image_name):
     prompt = update_workflow(image_name)
     try:
@@ -142,7 +135,6 @@ def wait_for_output_rename_and_upload(input_filename):
                     logging.info(f"⏳ Output not stable yet: {output_file}")
                     return
 
-                # Rename output to match input filename
                 with open(src, "rb") as fsrc:
                     content = fsrc.read()
                 with open(dst, "wb") as fdst:
@@ -150,7 +142,6 @@ def wait_for_output_rename_and_upload(input_filename):
                 os.remove(src)
                 print(f"📄 Renamed output to: {input_filename}")
 
-                # Upload renamed file
                 target_url = get_target_url()
                 if not target_url:
                     logging.warning("⚠️ No presigned URL found — skipping upload")
@@ -168,21 +159,26 @@ def wait_for_output_rename_and_upload(input_filename):
                 print(f"⚠️ Failed during output handling: {e}")
                 return
 
-# === File Watcher ===
 class InputImageHandler(FileSystemEventHandler):
     def __init__(self):
         self.queue = []
         self.processing = False
 
-    def on_created(self, event):
+    def _maybe_queue_image(self, event):
         if event.is_directory:
             return
         filename = os.path.basename(event.src_path)
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             if filename not in self.queue:
                 self.queue.append(filename)
-                print(f"📸 New image queued: {filename}")
+                print(f"📸 Image queued: {filename}")
                 self.process_next()
+
+    def on_created(self, event):
+        self._maybe_queue_image(event)
+
+    def on_modified(self, event):
+        self._maybe_queue_image(event)
 
     def process_next(self):
         if self.processing or not self.queue:
@@ -195,7 +191,6 @@ class InputImageHandler(FileSystemEventHandler):
                 wait_for_output_rename_and_upload(image_name)
         self.processing = False
 
-# === Main Entry ===
 if __name__ == "__main__":
     print(f"👀 Watching input: {INPUT_DIR}")
     print(f"👀 Watching output: {OUTPUT_DIR}")
