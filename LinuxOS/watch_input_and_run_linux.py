@@ -184,12 +184,32 @@ class InputImageHandler(FileSystemEventHandler):
         if self.processing or not self.queue:
             return
         self.processing = True
+
         while self.queue:
             image_name = self.queue.pop(0)
             print(f"🚀 Processing: {image_name}")
+
+            # Wait for input file to stabilize
+            input_path = os.path.join(INPUT_DIR, image_name)
+            for _ in range(5):
+                try:
+                    size1 = os.path.getsize(input_path)
+                    time.sleep(1)
+                    size2 = os.path.getsize(input_path)
+                    if size1 == size2:
+                        break
+                except FileNotFoundError:
+                    time.sleep(1)
+            else:
+                logging.warning(f"⚠️ Skipping {image_name}, file never stabilized.")
+                continue  # move to next image
+
+            # Now it's safe to submit
             if send_image(image_name):
                 wait_for_output_rename_and_upload(image_name)
+
         self.processing = False
+
 
 if __name__ == "__main__":
     print(f"👀 Watching input: {INPUT_DIR}")
