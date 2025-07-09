@@ -20,6 +20,11 @@ os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def clean_filename(filename):
+    # Extract everything starting from 'ticket-' to keep UUID
+    match = re.search(r'(ticket-[a-zA-Z0-9\\-_.]+)', filename, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    # fallback: remove gender prefix if any
     lower = filename.lower()
     if lower.startswith("male_") or lower.startswith("female_"):
         return filename.split("_", 1)[-1]
