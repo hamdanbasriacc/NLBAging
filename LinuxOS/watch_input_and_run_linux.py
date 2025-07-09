@@ -157,6 +157,10 @@ def wait_for_output_rename_and_upload(input_filename):
                     os.remove(dst)
                     os.remove(os.path.join(INPUT_DIR, input_filename))
                     logging.info(f"🗑️ Cleaned up {input_filename} after successful upload")
+
+                    # ✅ Mark this file as processed (important: only after successful upload & cleanup)
+                    handler.processed_files.add(input_filename)
+
                 else:
                     logging.warning(f"❌ Upload failed — keeping files for retry")
                 return
