@@ -7,7 +7,6 @@ OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROCESSED_DIR = os.path.join(SCRIPT_DIR, "sent")
 TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
-DONE_FLAG_FILE = os.path.join(SCRIPT_DIR, "upload_done.flag")
 
 CHECK_INTERVAL = 5  # seconds
 STABILITY_WAIT = 2  # seconds between size checks
@@ -78,22 +77,7 @@ def main():
                 except FileNotFoundError:
                     logging.warning(f"⚠️ Tried to delete, but file already missing: {filename}")
 
-                # Write completion flag for auto_copy script
-                try:
-                    with open(DONE_FLAG_FILE, "w") as flag:
-                        flag.write("done")
-                    logging.info(f"✅ Created flag: {DONE_FLAG_FILE}")
-                except Exception as e:
-                    logging.error(f"❌ Failed to create done flag: {e}")
-
         time.sleep(CHECK_INTERVAL)
-
-        if os.path.exists(DONE_FLAG_FILE):
-            try:
-                os.remove(DONE_FLAG_FILE)
-                logging.info(f"✅ Removed flag: {DONE_FLAG_FILE}")
-            except Exception as e:
-                logging.error(f"❌ Failed to remove flag: {e}")
 
 if __name__ == "__main__":
     main()

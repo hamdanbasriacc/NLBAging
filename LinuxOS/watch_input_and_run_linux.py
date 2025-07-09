@@ -5,6 +5,7 @@ import time
 import json
 import threading
 import requests
+import unicodedata
 from PIL import Image
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -23,6 +24,12 @@ def clean_filename(filename):
     if lower.startswith("male_") or lower.startswith("female_"):
         return filename.split("_", 1)[-1]
     return filename
+
+def safe_filename(name):
+    try:
+        return unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    except Exception:
+        return "output_image.jpg"
 
 def wait_for_comfyui_server(timeout=300):
     print("\u23f3 Waiting for ComfyUI server to be ready...")
@@ -53,7 +60,7 @@ def is_valid_image(path):
             img.verify()
         return True
     except Exception as e:
-        print(f"\u26a0\ufe0f Invalid image: {path} \u2014 {e}")
+        print(f"\u26a0\ufe0f Invalid image: {path} — {e}")
         return False
 
 def update_workflow(image_name):
@@ -105,15 +112,11 @@ def wait_for_output_and_rename(input_filename):
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
-            cleaned_name = clean_filename(input_filename)
+            cleaned_name = safe_filename(clean_filename(input_filename))
             dst = os.path.join(OUTPUT_DIR, cleaned_name)
 
             try:
-                with open(src, "rb") as fsrc:
-                    content = fsrc.read()
-                with open(dst, "wb") as fdst:
-                    fdst.write(content)
-                os.remove(src)
+                os.rename(src, dst)
                 os.remove(os.path.join(INPUT_DIR, input_filename))
                 print(f"\u2705 Renamed output as {cleaned_name} and deleted input image.")
                 return
@@ -136,10 +139,17 @@ class InputImageHandler(FileSystemEventHandler):
     def _handle_file(self, event):
         if event.is_directory:
             return
+
         filename = os.path.basename(event.src_path)
 
+        try:
+            filename.encode('utf-8')
+        except UnicodeEncodeError:
+            print(f"\u26a0\ufe0f Skipping file with problematic filename: {filename}")
+            return
+
         if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            return  # ❗ ignore flags, .txt, etc.
+            return
 
         if filename not in self.queue:
             self.queue.append(filename)
@@ -153,7 +163,6 @@ class InputImageHandler(FileSystemEventHandler):
     def process_next(self):
         if self.processing:
             return
-
         if not self.queue:
             return
 
