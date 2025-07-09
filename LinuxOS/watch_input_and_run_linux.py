@@ -172,7 +172,6 @@ class InputImageHandler(FileSystemEventHandler):
             if filename not in self.queue:
                 self.queue.append(filename)
                 print(f"📸 Image queued: {filename}")
-                self.process_next()
 
     def on_created(self, event):
         self._maybe_queue_image(event)
