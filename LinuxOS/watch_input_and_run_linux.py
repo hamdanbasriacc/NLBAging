@@ -202,7 +202,7 @@ class InputImageHandler(FileSystemEventHandler):
                 except FileNotFoundError:
                     time.sleep(1)
             else:
-                # logging.warning(f"⚠️ Skipping {image_name}, file never stabilized.")
+                logging.warning(f"⚠️ Waiting for next image...")
                 continue  # move to next image
 
             # Now it's safe to submit
