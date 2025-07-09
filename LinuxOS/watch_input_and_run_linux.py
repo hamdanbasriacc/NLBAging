@@ -120,7 +120,8 @@ def send_image(image_name):
 def wait_for_output_rename_and_upload(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
-    for _ in range(300):
+
+    for _ in range(300):  # 5 minutes max
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
@@ -131,10 +132,7 @@ def wait_for_output_rename_and_upload(input_filename):
             dst = os.path.join(OUTPUT_DIR, input_filename)
 
             try:
-                if not is_file_stable(src):
-                    logging.info(f"⏳ Output not stable yet: {output_file}")
-                    return
-
+                # Copy content from temp name to final renamed file
                 with open(src, "rb") as fsrc:
                     content = fsrc.read()
                 with open(dst, "wb") as fdst:
@@ -142,6 +140,7 @@ def wait_for_output_rename_and_upload(input_filename):
                 os.remove(src)
                 print(f"📄 Renamed output to: {input_filename}")
 
+                # Upload after successful rename
                 target_url = get_target_url()
                 if not target_url:
                     logging.warning("⚠️ No presigned URL found — skipping upload")
@@ -153,11 +152,12 @@ def wait_for_output_rename_and_upload(input_filename):
                     logging.info(f"🗑️ Cleaned up {input_filename} after successful upload")
                 else:
                     logging.warning(f"❌ Upload failed — keeping files for retry")
-
                 return
+
             except Exception as e:
                 print(f"⚠️ Failed during output handling: {e}")
                 return
+
 
 class InputImageHandler(FileSystemEventHandler):
     def __init__(self):
