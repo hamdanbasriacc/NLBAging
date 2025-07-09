@@ -43,5 +43,5 @@ echo "👁️ Watching for input..."
 # "$PYTHON_BIN" auto_copy_to_comfyui_input.py &
 
 # Launch output uploader watcher
-echo "📤 Watching for generated outputs to upload..."
-"$PYTHON_BIN" watcher_send_output.py &
+# echo "📤 Watching for generated outputs to upload..."
+# "$PYTHON_BIN" watcher_send_output.py &
