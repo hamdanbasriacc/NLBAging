@@ -171,20 +171,37 @@ class InputImageHandler(FileSystemEventHandler):
         self.queue = []
         self.processing = False
         self.image_to_url = {}
+        self.processed_files = set()
+        self.file_mtimes = {}
         
 
     def _maybe_queue_image(self, event):
         if event.is_directory:
             return
         filename = os.path.basename(event.src_path)
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+        if not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            return
+
+        filepath = os.path.join(INPUT_DIR, filename)
+        try:
+            current_mtime = os.path.getmtime(filepath)
+        except FileNotFoundError:
+            return  # file was deleted too quickly
+
+        prev_mtime = self.file_mtimes.get(filename)
+
+        # Only requeue if:
+        # - it's new
+        # - OR it has a changed mtime (meaning it's newly copied in again)
+        if filename not in self.processed_files or current_mtime != prev_mtime:
+            self.file_mtimes[filename] = current_mtime
+            self.queue.append(filename)
             url = get_target_url()
             if url:
                 self.image_to_url[filename] = url
-                print(f"📸 Image queued: {filename} with assigned URL")
+                print(f"📸 Queued {filename} with updated mtime")
             else:
-                logging.warning(f"⚠️ No presigned URL for {filename} — will fail at upload")
-            self.queue.append(filename)
+                logging.warning(f"⚠️ No presigned URL for {filename}")
             if not self.processing:
                 self.process_next()
 
