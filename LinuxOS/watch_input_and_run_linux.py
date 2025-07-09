@@ -178,16 +178,15 @@ class InputImageHandler(FileSystemEventHandler):
             return
         filename = os.path.basename(event.src_path)
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            if filename not in self.queue:
-                self.queue.append(filename)
-                url = get_target_url()
-                if url:
-                    self.image_to_url[filename] = url
-                    print(f"📸 Image queued: {filename} with assigned URL")
-                else:
-                    logging.warning(f"⚠️ No presigned URL for {filename} — will fail at upload")
-                if not self.processing:
-                    self.process_next()
+            url = get_target_url()
+            if url:
+                self.image_to_url[filename] = url
+                print(f"📸 Image queued: {filename} with assigned URL")
+            else:
+                logging.warning(f"⚠️ No presigned URL for {filename} — will fail at upload")
+            self.queue.append(filename)
+            if not self.processing:
+                self.process_next()
 
     def on_created(self, event):
         self._maybe_queue_image(event)
