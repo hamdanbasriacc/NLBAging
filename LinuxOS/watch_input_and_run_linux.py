@@ -5,6 +5,7 @@ import time
 import json
 import requests
 import logging
+import re
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -121,6 +122,12 @@ def wait_for_output_rename_and_upload(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
 
+    # Clean the filename by removing 'Male' or 'Female' with surrounding underscores (or at edges)
+    cleaned_name = re.sub(r'(^|_)Male(_|$)', r'\1', input_filename, flags=re.IGNORECASE)
+    cleaned_name = re.sub(r'(^|_)Female(_|$)', r'\1', cleaned_name, flags=re.IGNORECASE)
+    cleaned_name = re.sub(r'__+', '_', cleaned_name)  # collapse double underscores
+    cleaned_name = cleaned_name.strip('_')  # remove leading/trailing underscores
+
     for _ in range(300):  # 5 minutes max
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
@@ -129,7 +136,7 @@ def wait_for_output_rename_and_upload(input_filename):
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
-            dst = os.path.join(OUTPUT_DIR, input_filename)
+            dst = os.path.join(OUTPUT_DIR, cleaned_name)
 
             try:
                 # Copy content from temp name to final renamed file
@@ -138,7 +145,7 @@ def wait_for_output_rename_and_upload(input_filename):
                 with open(dst, "wb") as fdst:
                     fdst.write(content)
                 os.remove(src)
-                print(f"📄 Renamed output to: {input_filename}")
+                print(f"📄 Renamed output to: {cleaned_name}")
 
                 # Upload after successful rename
                 target_url = handler.image_to_url.get(input_filename)
