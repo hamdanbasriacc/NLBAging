@@ -10,15 +10,15 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 # === Config ===
-INPUT_DIR = "/home/admin/shared_comfy_data"
-#INPUT_DIR = "/home/shared_comfy_data"
-OUTPUT_DIR = "/home/admin/ComfyUI/output"
-#OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
-WORKFLOW_PATH = "/home/admin/ComfyUI/user/workflows/aging_workflow.json"
-#WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
+#INPUT_DIR = "/home/admin/shared_comfy_data"
+INPUT_DIR = "/home/shared_comfy_data"
+#OUTPUT_DIR = "/home/admin/ComfyUI/output"
+OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
+#WORKFLOW_PATH = "/home/admin/ComfyUI/user/workflows/aging_workflow.json"
+WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
-TARGET_URL_FILE = "/home/admin/shared_comfy_data/latest_aged_url.txt"
-#TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
+#TARGET_URL_FILE = "/home/admin/shared_comfy_data/latest_aged_url.txt"
+TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
 STABILITY_WAIT = 2  # seconds
 
 # === Logging Setup ===

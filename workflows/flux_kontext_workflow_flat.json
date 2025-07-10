@@ -1,0 +1,231 @@
+{
+  "39": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "param_0": "ae.safetensors"
+    },
+    "_meta": {
+      "title": "VAELoader"
+    }
+  },
+  "38": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "param_0": "clip_l.safetensors",
+      "param_1": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "param_2": "flux",
+      "param_3": "default"
+    },
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "135": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ConditioningZeroOut"
+    }
+  },
+  "173": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "42",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "PreviewImage"
+    }
+  },
+  "147": {
+    "class_type": "LoadImageOutput",
+    "inputs": {
+      "param_0": "ComfyUI_00013_.png [output]",
+      "param_1": false,
+      "param_2": "refresh",
+      "param_3": "image"
+    },
+    "_meta": {
+      "title": "LoadImageOutput"
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "31",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAEDecode"
+    }
+  },
+  "124": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "42",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAEEncode"
+    }
+  },
+  "42": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "146",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "FluxKontextImageScale"
+    }
+  },
+  "146": {
+    "class_type": "ImageStitch",
+    "inputs": {
+      "param_0": "right",
+      "param_1": true,
+      "param_2": 0,
+      "param_3": "white",
+      "image1": [
+        "142",
+        0
+      ],
+      "image2": [
+        "147",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ImageStitch"
+    }
+  },
+  "35": {
+    "class_type": "FluxGuidance",
+    "inputs": {
+      "param_0": 2.5,
+      "conditioning": [
+        "177",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "37": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "param_0": "flux1-dev-kontext_fp8_scaled.safetensors",
+      "param_1": "default"
+    },
+    "_meta": {
+      "title": "UNETLoader"
+    }
+  },
+  "177": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "6",
+        0
+      ],
+      "latent": [
+        "124",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "142": {
+    "class_type": "LoadImageOutput",
+    "inputs": {
+      "param_0": "ComfyUI_00013_.png [output]",
+      "param_1": true,
+      "param_2": "refresh",
+      "param_3": "image"
+    },
+    "_meta": {
+      "title": "LoadImageOutput"
+    }
+  },
+  "136": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "param_0": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "SaveImage"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "param_0": "A naturally aged version of the same person in this photo. Preserve identity, facial structure, and features. The person is slightly older, around mid-50s, with subtle aging signs like soft wrinkles and more defined facial lines. The body is adult-sized with natural proportions, posed front-facing for a portrait. Same outfit and same lighting as the original. No hairstyle changes. Studio photo realism with high detail. Maintain same expression and background.\n",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "31": {
+    "class_type": "KSampler",
+    "inputs": {
+      "param_0": 593398528265229,
+      "param_1": "randomize",
+      "param_2": 20,
+      "param_3": 1,
+      "param_4": "euler",
+      "param_5": "simple",
+      "param_6": 1,
+      "model": [
+        "37",
+        0
+      ],
+      "positive": [
+        "35",
+        0
+      ],
+      "negative": [
+        "135",
+        0
+      ],
+      "latent_image": [
+        "124",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  }
+}
