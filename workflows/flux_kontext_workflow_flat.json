@@ -2,7 +2,7 @@
   "39": {
     "class_type": "VAELoader",
     "inputs": {
-      "param_0": "ae.safetensors"
+      "vae_name": "ae.safetensors"
     },
     "_meta": {
       "title": "VAELoader"
@@ -11,10 +11,10 @@
   "38": {
     "class_type": "DualCLIPLoader",
     "inputs": {
-      "param_0": "clip_l.safetensors",
-      "param_1": "t5xxl_fp8_e4m3fn_scaled.safetensors",
-      "param_2": "flux",
-      "param_3": "default"
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "flux",
+      "output_type": "default"
     },
     "_meta": {
       "title": "DualCLIPLoader"
@@ -24,7 +24,7 @@
     "class_type": "ConditioningZeroOut",
     "inputs": {
       "conditioning": [
-        "6",
+        "237",
         0
       ]
     },
@@ -36,11 +36,11 @@
     "class_type": "VAEDecode",
     "inputs": {
       "samples": [
-        "31",
+        "52",
         0
       ],
       "vae": [
-        "39",
+        "61",
         0
       ]
     },
@@ -52,11 +52,11 @@
     "class_type": "VAEEncode",
     "inputs": {
       "pixels": [
-        "189",
+        "299",
         0
       ],
       "vae": [
-        "39",
+        "223",
         0
       ]
     },
@@ -67,9 +67,9 @@
   "35": {
     "class_type": "FluxGuidance",
     "inputs": {
-      "param_0": 2.5,
+      "guidance": 2.5,
       "conditioning": [
-        "177",
+        "292",
         0
       ]
     },
@@ -80,8 +80,8 @@
   "37": {
     "class_type": "UNETLoader",
     "inputs": {
-      "param_0": "flux1-dev-kontext_fp8_scaled.safetensors",
-      "param_1": "default"
+      "unet_name": "flux1-dev-kontext_fp8_scaled.safetensors",
+      "weight_dtype": "default"
     },
     "_meta": {
       "title": "UNETLoader"
@@ -91,11 +91,11 @@
     "class_type": "ReferenceLatent",
     "inputs": {
       "conditioning": [
-        "6",
+        "294",
         0
       ],
       "latent": [
-        "124",
+        "293",
         0
       ]
     },
@@ -106,9 +106,9 @@
   "136": {
     "class_type": "SaveImage",
     "inputs": {
-      "param_0": "ComfyUI",
+      "filename_prefix": "ComfyUI",
       "images": [
-        "8",
+        "240",
         0
       ]
     },
@@ -119,27 +119,26 @@
   "31": {
     "class_type": "KSampler",
     "inputs": {
-      "param_0": 318461415601827,
-      "param_1": "randomize",
-      "param_2": 20,
-      "param_3": 1,
-      "param_4": "euler",
-      "param_5": "simple",
-      "param_6": 1,
+      "seed": 876953490040039,
+      "steps": 20,
+      "cfg": 8.5,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1.0,
       "model": [
-        "37",
+        "58",
         0
       ],
       "positive": [
-        "35",
+        "57",
         0
       ],
       "negative": [
-        "135",
+        "238",
         0
       ],
       "latent_image": [
-        "124",
+        "291",
         0
       ]
     },
@@ -150,9 +149,9 @@
   "6": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "param_0": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus",
+      "text": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus",
       "clip": [
-        "38",
+        "59",
         0
       ]
     },
@@ -162,10 +161,7 @@
   },
   "189": {
     "class_type": "LoadImage",
-    "inputs": {
-      "param_0": "Male_Chinese_Front.jpg",
-      "param_1": "image"
-    },
+    "inputs": {},
     "_meta": {
       "title": "LoadImage"
     }
