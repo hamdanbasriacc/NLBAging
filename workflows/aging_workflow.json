@@ -98,7 +98,7 @@
   },
   "14": {
     "inputs": {
-      "ckpt_name": "cyberrealistic-dreambooth.safetensors"
+      "ckpt_name": "dreamshaper_8.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
@@ -120,7 +120,7 @@
   },
   "29": {
     "inputs": {
-      "lora_name": "bodygrammps.pt",
+      "lora_name": "blindbox_v1_mix.safetensors",
       "strength_model": 0.6,
       "strength_clip": 0.25,
       "model": [
