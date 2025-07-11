@@ -108,7 +108,7 @@
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [
-        "240",
+        "8",
         0
       ]
     },
