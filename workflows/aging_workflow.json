@@ -31,7 +31,7 @@
   },
   "6": {
     "inputs": {
-      "text": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus",
+      "text": "portrait photo of the same {gender} person, 30 years older, gracefully aged, retains original facial features, skin tone, and ethnicity, realistic lighting, natural wrinkles, detailed skin texture, vibrant eyes, no gender change, looking confident and calm",
       "clip": [
         "29",
         1
