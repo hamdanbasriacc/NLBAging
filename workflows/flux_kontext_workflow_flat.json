@@ -8,38 +8,11 @@
       "title": "Load Image"
     }
   },
-  "39": {
-    "inputs": {
-      "ckpt_name": "flux1-dev-kontext_fp8_scaled.safetensors"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Checkpoint"
-    }
-  },
   "38": {
-    "inputs": {
-      "vae_name": "ae.safetensors"
-    },
-    "class_type": "VAELoader",
+    "inputs": {},
+    "class_type": "DualCLIPLoader",
     "_meta": {
-      "title": "Load VAE"
-    }
-  },
-  "124": {
-    "inputs": {
-      "pixels": [
-        "10",
-        0
-      ],
-      "vae": [
-        "38",
-        0
-      ]
-    },
-    "class_type": "VAEEncode",
-    "_meta": {
-      "title": "VAE Encode"
+      "title": "DualCLIPLoader"
     }
   },
   "6": {
@@ -67,6 +40,41 @@
       "title": "Negative Prompt"
     }
   },
+  "39": {
+    "inputs": {
+      "unet_name": "flux1-dev-kontext_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+      },
+      "class_type": "UNETLoader",
+      "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "124": {
+    "inputs": {
+      "pixels": [
+        "10",
+        0
+      ],
+      "vae": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "40": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
   "177": {
     "inputs": {
       "conditioning": [
@@ -83,10 +91,23 @@
       "title": "Reference Latent"
     }
   },
+  "99": {
+    "inputs": {
+      "value": 2.5
+    },
+    "class_type": "Number",
+    "_meta": {
+      "title": "Guidance Strength"
+    }
+  },
   "35": {
     "inputs": {
       "conditioning": [
         "177",
+        0
+      ],
+      "guidance": [
+        "99",
         0
       ]
     },
@@ -99,7 +120,7 @@
     "inputs": {
       "seed": 318461415601827,
       "steps": 20,
-      "cfg": 1,
+      "cfg": 10,
       "sampler_name": "euler",
       "scheduler": "simple",
       "denoise": 1,
@@ -132,7 +153,7 @@
         0
       ],
       "vae": [
-        "38",
+        "40",
         0
       ]
     },
