@@ -16,5 +16,5 @@ echo "📂 Listing contents of shared input folder..."
 ls -lah /home/admin/shared_comfy_data
 
 echo "🚀 Restarting ComfyUI watcher..."
-cd /home/hamdan_basri/ComfyUI/LinuxOS && ./watch_input_and_run.sh
-#cd /home/admin/ComfyUI/LinuxOS && ./watch_input_and_run.sh
+#cd /home/hamdan_basri/ComfyUI/LinuxOS && ./watch_input_and_run.sh
+cd /home/admin/ComfyUI/LinuxOS && ./watch_input_and_run.sh
