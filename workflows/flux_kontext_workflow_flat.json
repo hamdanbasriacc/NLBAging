@@ -1,84 +1,70 @@
 {
-  "136": {
+  "10": {
     "inputs": {
-      "images": [
-        "8",
-        0
-      ],
-      "text": "ComfyUI",
-      "filename_prefix": "ComfyUI"
+      "image": "Male_Chinese_Front.jpg"
     },
-    "class_type": "SaveImage",
+    "class_type": "LoadImage",
     "_meta": {
-      "title": "SaveImage"
+      "title": "Load Image"
     }
   },
-  "8": {
+  "39": {
     "inputs": {
-      "samples": [
-        "31",
-        0
-      ],
-      "vae": [
-        "39",
-        0
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAEDecode"
-    }
-  },
-  "31": {
-    "inputs": {
-      "model": [
-        "37",
-        0
-      ],
-      "positive": [
-        "35",
-        0
-      ],
-      "negative": [
-        "135",
-        0
-      ],
-      "latent_image": [
-        "124",
-        0
-      ],
-      "seed": 318461415601827,
-      "steps": 20,
-      "cfg": 1,
-      "sampler_name": "euler",
-      "scheduler": "simple",
-      "denoise": 1
-    },
-    "class_type": "KSampler",
-    "_meta": {
-      "title": "KSampler"
-    }
-  },
-  "35": {
-    "inputs": {
-      "conditioning": [
-        "177",
-        0
-      ]
-    },
-    "class_type": "FluxGuidance",
-    "_meta": {
-      "title": "FluxGuidance"
-    }
-  },
-  "37": {
-    "inputs": {
-      "unet_name": "flux1-dev-kontext_fp8_scaled.safetensors",
-      "weight_dtype": "default"
+      "ckpt_name": "flux1-dev-kontext_fp8_scaled.safetensors"
     },
     "class_type": "UNETLoader",
     "_meta": {
-      "title": "UNETLoader"
+      "title": "Load Checkpoint"
+    }
+  },
+  "38": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "124": {
+    "inputs": {
+      "pixels": [
+        "10",
+        0
+      ],
+      "vae": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus",
+      "clip": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "135": {
+    "inputs": {
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "Negative Prompt"
     }
   },
   "177": {
@@ -94,77 +80,78 @@
     },
     "class_type": "ReferenceLatent",
     "_meta": {
-      "title": "ReferenceLatent"
+      "title": "Reference Latent"
     }
   },
-  "135": {
+  "35": {
     "inputs": {
       "conditioning": [
-        "6",
+        "177",
         0
       ]
     },
-    "class_type": "ConditioningZeroOut",
+    "class_type": "FluxGuidance",
     "_meta": {
-      "title": "ConditioningZeroOut"
+      "title": "Flux Guidance"
     }
   },
-  "38": {
+  "31": {
     "inputs": {
-      "clip_name1": "clip_l.safetensors",
-      "clip_name2": "t5xxl_fp8_e4m3fn_scaled.safetensors",
-      "type": "flux",
-      "subfolder": "default"
-    },
-    "class_type": "DualCLIPLoader",
-    "_meta": {
-      "title": "DualCLIPLoader"
-    }
-  },
-  "6": {
-    "inputs": {
-      "clip": [
-        "38",
+      "seed": 318461415601827,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "39",
         0
       ],
-      "text": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus",
-      "filename_prefix": "{gender} , eldery, wise, graceful face, soft wrinkles, kind eyes, calm expression, high detail, cinematic lighting, ultra realistic, 35mm lens, shallow depth of field, masterpiece, sharp focus"
+      "positive": [
+        "35",
+        0
+      ],
+      "negative": [
+        "135",
+        0
+      ],
+      "latent_image": [
+        "124",
+        0
+      ]
     },
-    "class_type": "CLIPTextEncode",
+    "class_type": "KSampler",
     "_meta": {
-      "title": "CLIP Text Encode (Positive Prompt)"
+      "title": "KSampler"
     }
   },
-  "124": {
+  "8": {
     "inputs": {
-      "pixels": [
-        "189",
+      "samples": [
+        "31",
         0
       ],
       "vae": [
-        "39",
+        "38",
         0
       ]
     },
-    "class_type": "VAEEncode",
+    "class_type": "VAEDecode",
     "_meta": {
-      "title": "VAEEncode"
+      "title": "VAE Decode"
     }
   },
-  "189": {
-    "inputs": {},
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "LoadImage"
-    }
-  },
-  "39": {
+  "136": {
     "inputs": {
-      "vae_name": "ae.safetensors"
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
     },
-    "class_type": "VAELoader",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "VAELoader"
+      "title": "Save Image"
     }
   }
 }
