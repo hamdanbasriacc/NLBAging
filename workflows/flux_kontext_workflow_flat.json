@@ -32,30 +32,6 @@
       "title": "ConditioningZeroOut"
     }
   },
-  "173": {
-    "class_type": "PreviewImage",
-    "inputs": {
-      "images": [
-        "42",
-        0
-      ]
-    },
-    "_meta": {
-      "title": "PreviewImage"
-    }
-  },
-  "147": {
-    "class_type": "LoadImageOutput",
-    "inputs": {
-      "param_0": "ComfyUI_00021_.png [output]",
-      "param_1": false,
-      "param_2": "refresh",
-      "param_3": "image"
-    },
-    "_meta": {
-      "title": "LoadImageOutput"
-    }
-  },
   "8": {
     "class_type": "VAEDecode",
     "inputs": {
@@ -76,7 +52,7 @@
     "class_type": "VAEEncode",
     "inputs": {
       "pixels": [
-        "146",
+        "189",
         0
       ],
       "vae": [
@@ -127,18 +103,6 @@
       "title": "ReferenceLatent"
     }
   },
-  "142": {
-    "class_type": "LoadImageOutput",
-    "inputs": {
-      "param_0": "ComfyUI_00021_.png [output]",
-      "param_1": true,
-      "param_2": "refresh",
-      "param_3": "image"
-    },
-    "_meta": {
-      "title": "LoadImageOutput"
-    }
-  },
   "136": {
     "class_type": "SaveImage",
     "inputs": {
@@ -155,7 +119,7 @@
   "31": {
     "class_type": "KSampler",
     "inputs": {
-      "param_0": 121290320955718,
+      "param_0": 318461415601827,
       "param_1": "randomize",
       "param_2": 20,
       "param_3": 1,
@@ -183,33 +147,6 @@
       "title": "KSampler"
     }
   },
-  "146": {
-    "class_type": "ImageStitch",
-    "inputs": {
-      "param_0": "right",
-      "param_1": true,
-      "param_2": 0,
-      "param_3": "white",
-      "image1": [
-        "142",
-        0
-      ],
-      "image2": [
-        "147",
-        0
-      ]
-    },
-    "_meta": {
-      "title": "ImageStitch"
-    }
-  },
-  "42": {
-    "class_type": "FluxKontextImageScale",
-    "inputs": {},
-    "_meta": {
-      "title": "FluxKontextImageScale"
-    }
-  },
   "6": {
     "class_type": "CLIPTextEncode",
     "inputs": {
@@ -221,6 +158,16 @@
     },
     "_meta": {
       "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "189": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "param_0": "Male_Chinese_Front.jpg",
+      "param_1": "image"
+    },
+    "_meta": {
+      "title": "LoadImage"
     }
   }
 }
