@@ -91,25 +91,13 @@
       "title": "Reference Latent"
     }
   },
-  "99": {
-    "inputs": {
-      "value": 2.5
-    },
-    "class_type": "Number",
-    "_meta": {
-      "title": "Guidance Strength"
-    }
-  },
   "35": {
     "inputs": {
       "conditioning": [
         "177",
         0
       ],
-      "guidance": [
-        "99",
-        0
-      ]
+      "guidance": 2.5
     },
     "class_type": "FluxGuidance",
     "_meta": {
