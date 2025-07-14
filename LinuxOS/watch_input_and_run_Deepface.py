@@ -47,14 +47,14 @@ def detect_ethnicity_from_image(image_path):
 
         # Map DeepFace's result to more region-specific descriptors
         ethnicity_map = {
-            'asian': 'brown-skinned Malay',
-            'chinese': 'Chinese Singaporean',
-            'indian': 'Indian',
+            'asian': 'Southeast Asian',
+            'indian': 'Indian Malaysian',
             'white': 'Malay',
             'latino hispanic': 'brown-skinned Malay',
             'black': 'dark-skinned Malay',
             'middle eastern': 'brown-skinned Malay'
-}
+        }
+
 
 
         return ethnicity_map.get(dominant, 'Southeast Asian')
