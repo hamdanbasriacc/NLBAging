@@ -36,7 +36,7 @@ echo "🚀 Starting ComfyUI server..."
 # Launch input watcher
 cd "$SCRIPT_DIR"
 echo "👁️ Watching for input..."
-"$PYTHON_BIN" watch_input_and_run_linux.py &
+"$PYTHON_BIN" watch_input_and_run_Deepface.py &
 
 # Launch auto-copy watcher from uploads folder
 # echo "📥 Watching for new uploads to copy into input..."

@@ -8,12 +8,13 @@ import logging
 import re
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from deepface import DeepFace
 
 # === Config ===
-INPUT_DIR = "/home/admin/shared_comfy_data"
-OUTPUT_DIR = "/home/admin/ComfyUI/output"
-TARGET_URL_FILE = "/home/admin/shared_comfy_data/latest_aged_url.txt"
-WORKFLOW_PATH = "/home/admin/ComfyUI/user/workflows/aging_workflow.json"
+WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
+INPUT_DIR = "/home/shared_comfy_data"
+OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
+TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 STABILITY_WAIT = 2  # seconds
 
@@ -39,6 +40,27 @@ def wait_for_comfyui_server(timeout=300):
     print("❌ Timeout waiting for ComfyUI server.")
     exit(1)
 
+def detect_ethnicity_from_image(image_path):
+    try:
+        analysis = DeepFace.analyze(img_path=image_path, actions=['race'], enforce_detection=False)
+        dominant = analysis[0]['dominant_race'].lower()
+
+        # Map DeepFace's result to more region-specific descriptors
+        ethnicity_map = {
+            'asian': 'Chinese Singaporean',
+            'indian': 'Indian Singaporean',
+            'white': 'Malay',
+            'latino hispanic': 'brown-skinned Malay',
+            'black': 'dark-skinned Malay',
+            'middle eastern': 'brown-skinned Malay'
+        }
+
+        return ethnicity_map.get(dominant, 'Southeast Asian')
+    except Exception as e:
+        logging.warning(f"⚠️ DeepFace failed to analyze image: {e}")
+        return 'Southeast Asian'
+
+
 def detect_gender_from_filename(filename):
     lower = filename.lower()
     if "female" in lower or "woman" in lower:
@@ -50,11 +72,14 @@ def detect_gender_from_filename(filename):
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
+    ethnicity = detect_ethnicity_from_image(image_path)
 
     if gender:
         print(f"🧠 Detected gender: {gender}")
     else:
-        print("🧠 Gender not detected — no changes to prompt")
+        print("🧠 Gender not detected — no changes to gender in prompt")
+
+    print(f"🧬 Detected ethnicity: {ethnicity}")
 
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = json.load(f)
@@ -66,10 +91,15 @@ def update_workflow(image_name):
         elif node.get("class_type") == "CLIPTextEncode":
             if "inputs" in node and "text" in node["inputs"]:
                 prompt_text = node["inputs"]["text"]
-                if isinstance(prompt_text, str) and "{gender}" in prompt_text and gender:
-                    node["inputs"]["text"] = prompt_text.replace("{gender}", gender)
+                if isinstance(prompt_text, str):
+                    if "{gender}" in prompt_text and gender:
+                        prompt_text = prompt_text.replace("{gender}", gender)
+                    if "{ethnicity}" in prompt_text and ethnicity:
+                        prompt_text = prompt_text.replace("{ethnicity}", ethnicity)
+                    node["inputs"]["text"] = prompt_text
 
     return {"prompt": workflow}
+
 
 def get_target_url():
     try:
@@ -242,7 +272,7 @@ class InputImageHandler(FileSystemEventHandler):
 
             # Now it's safe to submit
             if send_image(image_name):
-                wait_for_output_rename_and_upload(image_name)
+               wait_for_output_rename_and_upload(image_name)
 
         self.processing = False
 
