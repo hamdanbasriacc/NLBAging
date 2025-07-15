@@ -103,14 +103,16 @@ def update_workflow(image_name):
     return {"prompt": workflow}
 
 
-def get_target_url():
-    try:
-        with open(TARGET_URL_FILE, "r") as f:
-            url = f.read().strip()
-            if url:
-                return url
-    except Exception as e:
-        logging.warning(f"⚠️ Failed to read target URL: {e}")
+def get_target_url_for_file(filename):
+    url_path = os.path.join(INPUT_DIR, f"{filename}.url")
+    if os.path.exists(url_path):
+        try:
+            with open(url_path, "r") as f:
+                url = f.read().strip()
+                if url:
+                    return url
+        except Exception as e:
+            logging.warning(f"⚠️ Failed to read presigned URL file for {filename}: {e}")
     return None
 
 def is_file_stable(filepath):
@@ -122,19 +124,22 @@ def is_file_stable(filepath):
     except Exception:
         return False
 
-def upload_image(image_path, target_url):
-    try:
-        with open(image_path, "rb") as img:
-            headers = {"Content-Type": "image/jpeg"}
-            response = requests.put(target_url, data=img, headers=headers)
-        if response.status_code in [200, 201]:
-            logging.info(f"✅ Uploaded: {os.path.basename(image_path)}")
-            return True
-        else:
-            logging.warning(f"❌ Upload failed: {response.status_code} - {response.text}")
-    except Exception as e:
-        logging.error(f"❌ Exception during upload: {e}")
+def upload_image(image_path, target_url, max_retries=3):
+    for attempt in range(1, max_retries + 1):
+        try:
+            with open(image_path, "rb") as img:
+                headers = {"Content-Type": "image/jpeg"}
+                response = requests.put(target_url, data=img, headers=headers)
+            if response.status_code in [200, 201]:
+                logging.info(f"✅ Uploaded: {os.path.basename(image_path)} (attempt {attempt})")
+                return True
+            else:
+                logging.warning(f"❌ Upload failed (attempt {attempt}): {response.status_code} - {response.text}")
+        except Exception as e:
+            logging.error(f"❌ Exception during upload (attempt {attempt}): {e}")
+        time.sleep(2)
     return False
+
 
 def send_image(image_name):
     prompt = update_workflow(image_name)
@@ -186,16 +191,34 @@ def wait_for_output_rename_and_upload(input_filename):
                     return
 
                 if upload_image(dst, target_url):
-                    os.remove(dst)
-                    os.remove(os.path.join(INPUT_DIR, input_filename))
-                    logging.info(f"🗑️ Cleaned up {input_filename} after successful upload")
+                    try:
+                        # Remove output file
+                        os.remove(dst)
 
-                    # ✅ Mark this file as processed (important: only after successful upload & cleanup)
-                    handler.processed_files.add(input_filename)
+                        # Remove original input image
+                        input_path = os.path.join(INPUT_DIR, input_filename)
+                        if os.path.exists(input_path):
+                            os.remove(input_path)
+
+                        # 🧹 Remove associated .url file
+                        url_file = os.path.join(INPUT_DIR, f"{input_filename}.url")
+                        if os.path.exists(url_file):
+                            os.remove(url_file)
+                            logging.info(f"🗑️ Removed URL file: {url_file}")
+
+                        logging.info(f"🗑️ Cleaned up {input_filename} after successful upload")
+
+                        # ✅ Mark this file as processed
+                        handler.processed_files.add(input_filename)
+
+                    except Exception as e:
+                        logging.error(f"❌ Cleanup failed after successful upload: {e}")
 
                 else:
-                    logging.warning(f"❌ Upload failed — keeping files for retry")
+                    logging.warning(f"❌ Upload failed after retries — keeping files for retry")
+
                 return
+
 
             except Exception as e:
                 print(f"⚠️ Failed during output handling: {e}")
@@ -232,7 +255,7 @@ class InputImageHandler(FileSystemEventHandler):
         if filename not in self.processed_files or current_mtime != prev_mtime:
             self.file_mtimes[filename] = current_mtime
             self.queue.append(filename)
-            url = get_target_url()
+            url = get_target_url_for_file(filename)
             if url:
                 self.image_to_url[filename] = url
                 print(f"📸 Queued {filename} with updated mtime")
