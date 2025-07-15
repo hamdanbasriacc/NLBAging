@@ -1,68 +1,80 @@
 #!/bin/bash
 
+# Log everything to setup_base.log
+exec > >(tee -a ~/setup_base.log) 2>&1
+
 set -e
 
-echo "🔧 Installing system packages (libffi, bzip2, xz, curl, unzip)..."
-sudo dnf install -y libffi-devel bzip2-devel xz-devel curl unzip
+log_step() {
+  echo -e "\n🔹 $1\n"
+}
 
-PYTHON_VERSION="3.10.14"
-PYTHON_DIR="/home/admin/ComfyUI/local_python/python-3.10"
-PYTHON_BIN="$PYTHON_DIR/bin/python3.10"
-VENV_DIR="/home/admin/ComfyUI/venv"
+run_in_bg() {
+  eval "$1" &
+  wait $!
+}
 
-echo "🐍 Checking for local Python $PYTHON_VERSION..."
-if [ -x "$PYTHON_BIN" ]; then
-    echo "✅ Python $PYTHON_VERSION already installed."
+# STEP 1 - Install Google Cloud SDK
+log_step "Step 1: Checking/installing Google Cloud SDK..."
+
+if [ -d "$HOME/google-cloud-sdk" ]; then
+  echo "✅ Google Cloud SDK already installed, skipping..."
 else
-    echo "⬇️ Installing Python $PYTHON_VERSION locally..."
-    cd /home/admin/ComfyUI
-    mkdir -p local_python && cd local_python
-
-    if [ ! -f "Python-$PYTHON_VERSION.tgz" ]; then
-        wget "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz"
-    fi
-
-    tar -xzf Python-$PYTHON_VERSION.tgz
-    cd Python-$PYTHON_VERSION
-    ./configure --prefix=$PYTHON_DIR --enable-optimizations
-    make -j$(nproc)
-    make install
+  cd ~
+  run_in_bg "curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-471.0.0-linux-x86_64.tar.gz"
+  run_in_bg "tar -xzf google-cloud-cli-471.0.0-linux-x86_64.tar.gz"
+  run_in_bg "./google-cloud-sdk/install.sh"
 fi
 
-echo "🐍 Verifying Python version..."
-$PYTHON_BIN --version
+# STEP 2 - Initialize Google SDK
+log_step "Step 2: Loading and initializing gcloud..."
 
-echo "📦 Checking for virtual environment..."
-if [ -d "$VENV_DIR" ]; then
-    echo "✅ Virtual environment already exists."
+source "$HOME/google-cloud-sdk/path.bash.inc"
+
+if ! gcloud config list account --quiet &>/dev/null; then
+  run_in_bg "gcloud init"
 else
-    echo "🧪 Creating virtual environment..."
-    $PYTHON_BIN -m venv $VENV_DIR
+  echo "✅ gcloud already initialized, skipping..."
 fi
 
-echo "📥 Activating virtual environment..."
-source $VENV_DIR/bin/activate
+# STEP 3 - Clone repos
+log_step "Step 3: Cloning ComfyUI and NLBAging repos..."
 
-echo "⬆️ Upgrading pip..."
-pip install --upgrade pip
+cd ~
+[ ! -d "ComfyUI" ] && run_in_bg "git clone https://github.com/comfyanonymous/ComfyUI.git" || echo "✅ ComfyUI already cloned."
+[ ! -d "NLBAging" ] && run_in_bg "git clone https://github.com/hamdanbasriacc/NLBAging.git" || echo "✅ NLBAging already cloned."
 
-REQ_TXT="/home/admin/ComfyUI/requirements.txt"
-if [ -f "$REQ_TXT" ]; then
-    echo "📦 Installing Python dependencies from requirements.txt..."
-    pip install -r $REQ_TXT
-else
-    echo "⚠️ No requirements.txt found at $REQ_TXT — skipping."
-fi
+# STEP 4 - Download GCS models
+log_step "Step 4: Downloading model files from Google Cloud Storage..."
 
-echo "🔥 Installing PyTorch with CUDA..."
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+mkdir -p ~/ComfyUI/models/loras ~/ComfyUI/models/checkpoints
 
-echo "🚀 Starting ComfyUI to confirm it works..."
-cd /home/admin/ComfyUI
-python main.py &
+[ ! -f ~/ComfyUI/models/loras/blindbox_v1_mix.safetensors ] && \
+  run_in_bg "gsutil cp gs://public-bucket-gdcc-setup/workflow/blindbox_v1_mix.safetensors ~/ComfyUI/models/loras/" || \
+  echo "✅ blindbox_v1_mix.safetensors already exists."
 
-echo "⌛ Waiting 5 seconds before stopping ComfyUI..."
-sleep 5
-pkill -f "main.py"
+[ ! -f ~/ComfyUI/models/checkpoints/dreamshaper_8.safetensors ] && \
+  run_in_bg "gsutil cp gs://public-bucket-gdcc-setup/workflow/dreamshaper_8.safetensors ~/ComfyUI/models/checkpoints/" || \
+  echo "✅ dreamshaper_8.safetensors already exists."
 
-echo "✅ Base ComfyUI setup complete!"
+# STEP 5 - Copy LinuxOS
+log_step "Step 5: Copying LinuxOS scripts..."
+
+mkdir -p ~/ComfyUI/LinuxOS
+cp -ru ~/NLBAging/LinuxOS/* ~/ComfyUI/LinuxOS/
+
+# STEP 6 - Copy workflows
+log_step "Step 6: Copying workflows..."
+
+mkdir -p ~/ComfyUI/user
+cp -ru ~/NLBAging/workflows ~/ComfyUI/user/
+
+# STEP 7 - Make scripts executable
+log_step "Step 7: Setting executable permissions..."
+
+chmod +x ~/ComfyUI/LinuxOS/reset_and_run.sh
+chmod +x ~/ComfyUI/LinuxOS/watch_input_and_run.sh
+
+echo -e "\n🎉 All setup steps completed successfully!"
+
+touch ~/.setup_comfyui_base_done
