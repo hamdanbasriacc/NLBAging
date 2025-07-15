@@ -108,12 +108,11 @@ def get_target_url_for_file(filename):
     if os.path.exists(url_path):
         try:
             with open(url_path, "r") as f:
-                url = f.read().strip()
-                if url:
-                    return url
+                return f.read().strip()
         except Exception as e:
             logging.warning(f"⚠️ Failed to read presigned URL file for {filename}: {e}")
     return None
+
 
 def is_file_stable(filepath):
     try:
@@ -255,12 +254,16 @@ class InputImageHandler(FileSystemEventHandler):
         if filename not in self.processed_files or current_mtime != prev_mtime:
             self.file_mtimes[filename] = current_mtime
             self.queue.append(filename)
-            url = get_target_url_for_file(filename)
+            # Strip gender prefix (if needed) to match the .url file
+            normalized_name = re.sub(r'^(Male|Female)_', '', filename, flags=re.IGNORECASE)
+            url = get_target_url_for_file(normalized_name)
+
             if url:
-                self.image_to_url[filename] = url
-                print(f"📸 Queued {filename} with updated mtime")
+                handler.image_to_url[filename] = url
+                print(f"📸 Queued {filename} with associated presigned URL")
             else:
                 logging.warning(f"⚠️ No presigned URL for {filename}")
+
             if not self.processing:
                 self.process_next()
 
