@@ -31,7 +31,7 @@
   },
   "6": {
     "inputs": {
-      "text": "portrait photo of the same {ethnicity} {gender} person, 30 years older, gracefully aged, retains original facial features, skin tone, and ethnicity, realistic lighting, natural wrinkles, detailed skin texture, vibrant eyes, no gender change, looking confident and calm",
+      "text": "Portrait of the same {ethnicity} {gender} person, make the person aged 55 years, sagging in cheeks, realistic lighting, neutral background, high facial similarity to original, older eyes, calm confident expression, very visible old skin texture and pores, slightly graying hair, smiling, high contrast.",
       "clip": [
         "29",
         1
