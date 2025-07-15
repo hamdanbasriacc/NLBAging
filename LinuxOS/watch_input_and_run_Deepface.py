@@ -318,8 +318,14 @@ if __name__ == "__main__":
     existing_images = [f for f in os.listdir(INPUT_DIR)
                        if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     if existing_images:
-        handler.queue.extend(existing_images)
-        handler.process_next()
+        for f in existing_images:
+            # Simulate a filesystem event to properly queue and resolve URLs
+            class DummyEvent:
+                def __init__(self, path):
+                    self.src_path = os.path.join(INPUT_DIR, path)
+                    self.is_directory = False
+            handler._maybe_queue_image(DummyEvent(f))
+
 
     try:
         while True:
