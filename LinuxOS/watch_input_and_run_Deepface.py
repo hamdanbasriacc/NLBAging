@@ -104,13 +104,26 @@ def update_workflow(image_name):
 
 
 def get_target_url_for_file(filename):
-    url_path = os.path.join(INPUT_DIR, f"{filename}.url")
-    if os.path.exists(url_path):
-        try:
-            with open(url_path, "r") as f:
-                return f.read().strip()
-        except Exception as e:
-            logging.warning(f"⚠️ Failed to read presigned URL file for {filename}: {e}")
+    # Extract the ticket ID using regex
+    match = re.search(r'(ticket-[a-f0-9\-]+)', filename, re.IGNORECASE)
+    if not match:
+        logging.warning(f"⚠️ Could not extract ticket ID from filename: {filename}")
+        return None
+
+    ticket_id = match.group(1)
+
+    # Find matching .url file in the folder (case-insensitive)
+    for f in os.listdir(INPUT_DIR):
+        if f.lower().startswith(ticket_id.lower()) and f.lower().endswith('.url'):
+            url_path = os.path.join(INPUT_DIR, f)
+            try:
+                with open(url_path, "r") as f:
+                    return f.read().strip()
+            except Exception as e:
+                logging.warning(f"⚠️ Failed to read presigned URL file {url_path}: {e}")
+                return None
+
+    logging.warning(f"⚠️ No .url file found for ticket ID: {ticket_id}")
     return None
 
 
