@@ -110,21 +110,24 @@ def get_target_url_for_file(filename):
         logging.warning(f"⚠️ Could not extract ticket ID from filename: {filename}")
         return None
 
-    ticket_id = match.group(1)
+    ticket_id = match.group(1).lower()
 
-    # Find matching .url file in the folder (case-insensitive)
+    # Match any .url file that contains the ticket ID (not just prefix)
     for f in os.listdir(INPUT_DIR):
-        if f.lower().startswith(ticket_id.lower()) and f.lower().endswith('.url'):
+        if ticket_id in f.lower() and f.lower().endswith('.url'):
             url_path = os.path.join(INPUT_DIR, f)
             try:
                 with open(url_path, "r") as f:
-                    return f.read().strip()
+                    url = f.read().strip()
+                    logging.info(f"🔗 Matched presigned URL from file: {url_path}")
+                    return url
             except Exception as e:
                 logging.warning(f"⚠️ Failed to read presigned URL file {url_path}: {e}")
                 return None
 
     logging.warning(f"⚠️ No .url file found for ticket ID: {ticket_id}")
     return None
+
 
 
 def is_file_stable(filepath):
