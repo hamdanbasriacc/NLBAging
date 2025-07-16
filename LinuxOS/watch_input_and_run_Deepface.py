@@ -146,9 +146,11 @@ def upload_image(image_path, target_url, max_retries=3):
                 headers = {"Content-Type": "image/jpeg"}
                 response = requests.put(target_url, data=img, headers=headers)
             if response.status_code in [200, 201]:
+                logging.info(f"📤 Uploading to: {target_url}")
                 logging.info(f"✅ Uploaded: {os.path.basename(image_path)} (attempt {attempt})")
                 return True
             else:
+                logging.info(f"📤 Uploading to: {target_url}")
                 logging.warning(f"❌ Upload failed (attempt {attempt}): {response.status_code} - {response.text}")
         except Exception as e:
             logging.error(f"❌ Exception during upload (attempt {attempt}): {e}")
