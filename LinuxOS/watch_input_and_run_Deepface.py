@@ -218,11 +218,13 @@ def wait_for_output_rename_and_upload(input_filename):
                 os.remove(src)
                 print(f"📄 Renamed output to: {cleaned_name}")
 
-                # Upload after successful rename
-                target_url = handler.image_to_url.get(input_filename)
+                # Try resolving just-in-time
+                normalized_name = re.sub(r'^(Male|Female)_', '', input_filename, flags=re.IGNORECASE)
+                target_url = get_target_url_for_file(normalized_name)
                 if not target_url:
-                    logging.warning(f"⚠️ No presigned URL stored for {input_filename}")
+                    logging.warning(f"⚠️ No presigned URL available for {input_filename} (even after delay)")
                     return
+
 
                 if upload_image(dst, target_url):
                     try:
@@ -298,13 +300,7 @@ class InputImageHandler(FileSystemEventHandler):
             self.queue.append(filename)
             # Strip gender prefix (if needed) to match the .url file
             normalized_name = re.sub(r'^(Male|Female)_', '', filename, flags=re.IGNORECASE)
-            url = get_target_url_for_file(normalized_name)
-
-            if url:
-                handler.image_to_url[filename] = url
-                print(f"📸 Queued {filename} with associated presigned URL")
-            else:
-                logging.warning(f"⚠️ No presigned URL for {filename}")
+            print(f"📸 Queued {filename} — will resolve URL later")
 
             if not self.processing:
                 self.process_next()
