@@ -10,6 +10,7 @@ import getpass
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from deepface import DeepFace
+from PIL import Image
 user = getpass.getuser()
 
 # === Config===
@@ -17,14 +18,12 @@ if user == "admin":
     # PROD
     INPUT_DIR = "/home/admin/shared_comfy_data"
     OUTPUT_DIR = "/home/admin/ComfyUI/output"
-    TARGET_URL_FILE = "/home/admin/shared_comfy_data/latest_aged_url.txt"
-    WORKFLOW_PATH = "/home/admin/ComfyUI/user/workflows/aging_workflow.json"
+    WORKFLOW_PATH = "/home/admin/ComfyUI/user/workflows/aging_upscaled.json"
 else:
     # DEV
     INPUT_DIR = "/home/shared_comfy_data"
     OUTPUT_DIR = f"/home/{user}/ComfyUI/output"
-    TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
-    WORKFLOW_PATH = f"/home/{user}/ComfyUI/user/workflows/aging_workflow.json"
+    WORKFLOW_PATH = f"/home/{user}/ComfyUI/user/workflows/aging_upscaled.json"
 
 print(f"🧭 Detected user: {user} — Running in {'PROD' if user == 'admin' else 'DEV'} mode")
 print(f"📂 INPUT_DIR = {INPUT_DIR}")
@@ -93,6 +92,19 @@ def update_workflow(image_name):
     gender = detect_gender_from_filename(image_name)
     ethnicity = detect_ethnicity_from_image(image_path)
 
+    # Determine scale_by value based on image resolution
+    try:
+        with Image.open(image_path) as img:
+            width, height = img.size
+            if width < 480 and height < 640:
+                scale_by_value = 2
+            else:
+                scale_by_value = 1
+        print(f"🖼️ Image resolution: {width}x{height} → scale_by = {scale_by_value}")
+    except Exception as e:
+        logging.warning(f"⚠️ Could not read image size: {e}")
+        scale_by_value = 1  # fallback to default
+
     if gender:
         print(f"🧠 Detected gender: {gender}")
     else:
@@ -104,18 +116,27 @@ def update_workflow(image_name):
         workflow = json.load(f)
 
     for node in workflow.values():
-        if isinstance(node, dict) and node.get("class_type") == "LoadImage":
-            if "inputs" in node and "image" in node["inputs"]:
-                node["inputs"]["image"] = image_path
-        elif node.get("class_type") == "CLIPTextEncode":
-            if "inputs" in node and "text" in node["inputs"]:
-                prompt_text = node["inputs"]["text"]
-                if isinstance(prompt_text, str):
-                    if "{gender}" in prompt_text and gender:
-                        prompt_text = prompt_text.replace("{gender}", gender)
-                    if "{ethnicity}" in prompt_text and ethnicity:
-                        prompt_text = prompt_text.replace("{ethnicity}", ethnicity)
-                    node["inputs"]["text"] = prompt_text
+        if isinstance(node, dict):
+            # Update LoadImage path
+            if node.get("class_type") == "LoadImage":
+                if "inputs" in node and "image" in node["inputs"]:
+                    node["inputs"]["image"] = image_path
+
+            # Update prompt text with gender and ethnicity
+            elif node.get("class_type") == "CLIPTextEncode":
+                if "inputs" in node and "text" in node["inputs"]:
+                    prompt_text = node["inputs"]["text"]
+                    if isinstance(prompt_text, str):
+                        if "{gender}" in prompt_text and gender:
+                            prompt_text = prompt_text.replace("{gender}", gender)
+                        if "{ethnicity}" in prompt_text and ethnicity:
+                            prompt_text = prompt_text.replace("{ethnicity}", ethnicity)
+                        node["inputs"]["text"] = prompt_text
+
+            # Inject scale_by value based on resolution
+            elif node.get("class_type") == "ImageScaleBy":
+                if "inputs" in node and "scale_by" in node["inputs"]:
+                    node["inputs"]["scale_by"] = scale_by_value
 
     return {"prompt": workflow}
 
