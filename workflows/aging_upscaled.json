@@ -10,7 +10,7 @@
       "model": ["6", 0],
       "positive": ["10", 0],
       "negative": ["11", 0],
-      "latent_image": ["22", 0]
+      "latent_image": ["12", 0]
     },
     "class_type": "KSampler",
     "_meta": {
