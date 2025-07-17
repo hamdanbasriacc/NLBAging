@@ -234,11 +234,18 @@ def wait_for_output_rename_and_upload(input_filename):
                         if os.path.exists(input_path):
                             os.remove(input_path)
 
-                        # 🧹 Remove associated .url file
-                        url_file = os.path.join(INPUT_DIR, f"{input_filename}.url")
-                        if os.path.exists(url_file):
-                            os.remove(url_file)
-                            logging.info(f"🗑️ Removed URL file: {url_file}")
+                        # Match the actual URL file based on ticket ID (again)
+                        match = re.search(r'(ticket-[a-f0-9\-]+)', input_filename, re.IGNORECASE)
+                        if match:
+                            ticket_id = match.group(1).lower()
+                            for f in os.listdir(INPUT_DIR):
+                                if ticket_id in f.lower() and f.lower().endswith(".url"):
+                                    url_file_path = os.path.join(INPUT_DIR, f)
+                                    try:
+                                        os.remove(url_file_path)
+                                        logging.info(f"🗑️ Removed URL file: {url_file_path}")
+                                    except Exception as e:
+                                        logging.warning(f"⚠️ Failed to delete URL file: {e}")
 
                         logging.info(f"🗑️ Cleaned up {input_filename} after successful upload")
 
