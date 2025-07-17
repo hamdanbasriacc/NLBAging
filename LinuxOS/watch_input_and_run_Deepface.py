@@ -6,15 +6,32 @@ import json
 import requests
 import logging
 import re
+import getpass
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from deepface import DeepFace
+user = getpass.getuser()
 
-# === Config ===
-INPUT_DIR = "/home/shared_comfy_data"
-OUTPUT_DIR = "/home/hamdan_basri/ComfyUI/output"
-TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
-WORKFLOW_PATH = "/home/hamdan_basri/ComfyUI/user/workflows/aging_workflow.json"
+# === Config===
+if user == "admin":
+    # PROD
+    INPUT_DIR = "/home/admin/shared_comfy_data"
+    OUTPUT_DIR = "/home/admin/ComfyUI/output"
+    TARGET_URL_FILE = "/home/admin/shared_comfy_data/latest_aged_url.txt"
+    WORKFLOW_PATH = "/home/admin/ComfyUI/user/workflows/aging_workflow.json"
+else:
+    # DEV
+    INPUT_DIR = "/home/shared_comfy_data"
+    OUTPUT_DIR = f"/home/{user}/ComfyUI/output"
+    TARGET_URL_FILE = "/home/shared_comfy_data/latest_aged_url.txt"
+    WORKFLOW_PATH = f"/home/{user}/ComfyUI/user/workflows/aging_workflow.json"
+
+print(f"🧭 Detected user: {user} — Running in {'PROD' if user == 'admin' else 'DEV'} mode")
+print(f"📂 INPUT_DIR = {INPUT_DIR}")
+print(f"📂 OUTPUT_DIR = {OUTPUT_DIR}")
+print(f"📄 WORKFLOW_PATH = {WORKFLOW_PATH}")
+
+# === ComfyUI Config DEV ===
 COMFYUI_API_URL = "http://127.0.0.1:8188/prompt"
 STABILITY_WAIT = 2  # seconds
 
