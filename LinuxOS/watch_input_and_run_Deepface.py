@@ -7,7 +7,6 @@ import requests
 import logging
 import re
 import getpass
-import shutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from deepface import DeepFace
@@ -112,11 +111,11 @@ def update_workflow(image_name):
             if short < 480 and long_ < 640:
                 scale_by_value = 3.0
             elif short < 720 and long_ < 1080:
-                scale_by_value = 2.7
+                scale_by_value = 1.5
             elif short < 900 and long_ < 1350:
-                scale_by_value = 2.3
+                scale_by_value = 1.2
             elif short < 1080 and long_ < 1920:
-                scale_by_value = 2.0
+                scale_by_value = 1
             else:
                 scale_by_value = 1.0
 
@@ -162,34 +161,6 @@ def update_workflow(image_name):
                     node["inputs"]["scale_by"] = scale_by_value
 
     return {"prompt": workflow}
-
-def is_valid_image(filepath, min_size_kb=10, white_threshold=0.8):
-    """
-    Checks if an image is not corrupted, not too small, and not mostly white.
-    """
-    try:
-        if os.path.getsize(filepath) < min_size_kb * 1024:
-            logging.warning(f"⚠️ File too small: {filepath}")
-            return False
-
-        with Image.open(filepath) as img:
-            img.verify()
-
-        with Image.open(filepath) as img_check:
-            img_check = img_check.convert("L")
-            pixels = list(img_check.getdata())
-            white_pixels = sum(1 for p in pixels if p > 240)
-            white_ratio = white_pixels / len(pixels)
-
-        if white_ratio > white_threshold:
-            logging.warning(f"⚠️ Image is mostly white ({white_ratio*100:.1f}%) — likely broken.")
-            return False
-
-        return True
-
-    except Exception as e:
-        logging.warning(f"⚠️ Image failed validation: {e}")
-        return False
 
 
 def get_target_url_for_file(filename):
@@ -265,12 +236,13 @@ def wait_for_output_rename_and_upload(input_filename):
     print(f"🔍 Waiting for output for: {input_filename}")
     prev_files = set(os.listdir(OUTPUT_DIR))
 
+    # Clean the filename by removing 'Male' or 'Female' with surrounding underscores (or at edges)
     cleaned_name = re.sub(r'(^|_)Male(_|$)', r'\1', input_filename, flags=re.IGNORECASE)
     cleaned_name = re.sub(r'(^|_)Female(_|$)', r'\1', cleaned_name, flags=re.IGNORECASE)
-    cleaned_name = re.sub(r'__+', '_', cleaned_name)
-    cleaned_name = cleaned_name.strip('_')
+    cleaned_name = re.sub(r'__+', '_', cleaned_name)  # collapse double underscores
+    cleaned_name = cleaned_name.strip('_')  # remove leading/trailing underscores
 
-    for _ in range(300):
+    for _ in range(300):  # 5 minutes max
         time.sleep(1)
         current_files = set(os.listdir(OUTPUT_DIR))
         new_files = current_files - prev_files
@@ -278,30 +250,10 @@ def wait_for_output_rename_and_upload(input_filename):
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
-
-            if not is_valid_image(src):
-                logging.warning(f"🛑 Skipping invalid image: {src}")
-                broken_dir = os.path.join(OUTPUT_DIR, "broken_outputs")
-                os.makedirs(broken_dir, exist_ok=True)
-                dst_broken = os.path.join(broken_dir, output_file)
-                shutil.move(src, dst_broken)
-                logging.warning(f"📦 Moved bad image to: {dst_broken}")
-
-                # ♻️ Requeue input only once
-                if not hasattr(handler, 'retry_counts'):
-                    handler.retry_counts = {}
-
-                handler.retry_counts[input_filename] = handler.retry_counts.get(input_filename, 0) + 1
-                if handler.retry_counts[input_filename] <= 1:
-                    handler.queue.append(input_filename)
-                    logging.info(f"🔁 Requeued {input_filename} for 1 retry")
-                else:
-                    logging.warning(f"❌ Giving up on {input_filename} after 1 retry")
-                return
-
             dst = os.path.join(OUTPUT_DIR, cleaned_name)
 
             try:
+                # Copy content from temp name to final renamed file
                 with open(src, "rb") as fsrc:
                     content = fsrc.read()
                 with open(dst, "wb") as fdst:
@@ -309,19 +261,25 @@ def wait_for_output_rename_and_upload(input_filename):
                 os.remove(src)
                 print(f"📄 Renamed output to: {cleaned_name}")
 
+                # Try resolving just-in-time
                 normalized_name = re.sub(r'^(Male|Female)_', '', input_filename, flags=re.IGNORECASE)
                 target_url = get_target_url_for_file(normalized_name)
                 if not target_url:
                     logging.warning(f"⚠️ No presigned URL available for {input_filename} (even after delay)")
                     return
 
+
                 if upload_image(dst, target_url):
                     try:
+                        # Remove output file
                         os.remove(dst)
+
+                        # Remove original input image
                         input_path = os.path.join(INPUT_DIR, input_filename)
                         if os.path.exists(input_path):
                             os.remove(input_path)
 
+                        # Match the actual URL file based on ticket ID (again)
                         match = re.search(r'(ticket-[a-f0-9\-]+)', input_filename, re.IGNORECASE)
                         if match:
                             ticket_id = match.group(1).lower()
@@ -335,6 +293,8 @@ def wait_for_output_rename_and_upload(input_filename):
                                         logging.warning(f"⚠️ Failed to delete URL file: {e}")
 
                         logging.info(f"🗑️ Cleaned up {input_filename} after successful upload")
+
+                        # ✅ Mark this file as processed
                         handler.processed_files.add(input_filename)
 
                     except Exception as e:
@@ -345,10 +305,10 @@ def wait_for_output_rename_and_upload(input_filename):
 
                 return
 
+
             except Exception as e:
                 print(f"⚠️ Failed during output handling: {e}")
                 return
-
 
 
 class InputImageHandler(FileSystemEventHandler):
