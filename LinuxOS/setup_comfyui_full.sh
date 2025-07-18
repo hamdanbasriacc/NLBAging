@@ -21,21 +21,27 @@ SHARED_DIR="/home/admin/shared_comfy_data"
 COMFYUI_DIR="/home/admin/ComfyUI"
 
 ########################################
-log_step "Step 1: Installing system packages"
-sudo dnf install -y libffi-devel
-sudo dnf install -y bzip2-devel
-sudo dnf install -y xz-devel
-sudo dnf install -y curl unzip
+log_step "Step 1: Checking system packages"
+
+are_packages_missing=false
+for pkg in libffi-devel bzip2-devel xz-devel curl unzip; do
+  rpm -q $pkg > /dev/null 2>&1 || are_packages_missing=true
+done
+
+if $are_packages_missing; then
+  log_step "Installing missing system packages..."
+  sudo dnf install -y libffi-devel bzip2-devel xz-devel curl unzip
+else
+  echo "✅ All required system packages already installed."
+fi
 
 ########################################
 log_step "Step 2: Preparing ComfyUI folder for Python install"
-
 mkdir -p $COMFYUI_DIR
 cd $COMFYUI_DIR
 
 ########################################
 log_step "Step 3: Installing Python $PYTHON_VERSION"
-
 if [ -x "$PYTHON_BIN" ]; then
   echo "✅ Python $PYTHON_VERSION already installed."
 else
@@ -54,7 +60,6 @@ $PYTHON_BIN --version | grep "$PYTHON_VERSION"
 
 ########################################
 log_step "Step 5: Creating virtual environment"
-
 if [ -d "$VENV_DIR" ]; then
   echo "✅ Virtual environment already exists."
 else
