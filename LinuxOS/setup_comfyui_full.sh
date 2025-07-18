@@ -79,17 +79,22 @@ python -c "import deepface" &>/dev/null || run_in_bg "pip install deepface"
 python -c "import tf_keras" &>/dev/null || run_in_bg "pip install tf-keras"
 
 ########################################
-log_step "Step 8: Cloning ComfyUI if missing and running once"
-if [ ! -d "$COMFYUI_DIR/.git" ]; then
-  git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR
+log_step "Step 8: Ensuring ComfyUI is cloned"
+if [ ! -f "$COMFYUI_DIR/main.py" ]; then
+  echo "📦 Cloning ComfyUI into $COMFYUI_DIR..."
+  rm -rf "$COMFYUI_DIR"
+  git clone https://github.com/comfyanonymous/ComfyUI.git "$COMFYUI_DIR"
 fi
+
+########################################
+log_step "Step 9: Running ComfyUI once"
 cd $COMFYUI_DIR
 python main.py &
 sleep 5
 pkill -f "main.py"
 
 ########################################
-log_step "Step 9: Installing Google Cloud SDK"
+log_step "Step 10: Installing Google Cloud SDK"
 if [ ! -d "$HOME/google-cloud-sdk" ]; then
   cd ~
   run_in_bg "curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-471.0.0-linux-x86_64.tar.gz"
@@ -98,35 +103,35 @@ if [ ! -d "$HOME/google-cloud-sdk" ]; then
 fi
 
 ########################################
-log_step "Step 10: Initializing gcloud"
+log_step "Step 11: Initializing gcloud"
 source "$HOME/google-cloud-sdk/path.bash.inc"
 if ! gcloud config list account --quiet &>/dev/null; then
   run_in_bg "gcloud init"
 fi
 
 ########################################
-log_step "Step 11: Cloning NLBAging repo"
+log_step "Step 12: Cloning NLBAging repo"
 cd ~
 [ ! -d "NLBAging" ] && run_in_bg "git clone https://github.com/hamdanbasriacc/NLBAging.git"
 
 ########################################
-log_step "Step 12: Downloading models from GCS"
+log_step "Step 13: Downloading models from GCS"
 mkdir -p ~/ComfyUI/models/loras ~/ComfyUI/models/checkpoints
 [ ! -f ~/ComfyUI/models/loras/blindbox_v1_mix.safetensors ] &&   run_in_bg "gsutil cp gs://public-bucket-gdcc-setup/workflow/blindbox_v1_mix.safetensors ~/ComfyUI/models/loras/"
 [ ! -f ~/ComfyUI/models/checkpoints/dreamshaper_8.safetensors ] &&   run_in_bg "gsutil cp gs://public-bucket-gdcc-setup/workflow/dreamshaper_8.safetensors ~/ComfyUI/models/checkpoints/"
 
 ########################################
-log_step "Step 13: Copying LinuxOS scripts"
+log_step "Step 14: Copying LinuxOS scripts"
 mkdir -p ~/ComfyUI/LinuxOS
 cp -ru ~/NLBAging/LinuxOS/* ~/ComfyUI/LinuxOS/
 
 ########################################
-log_step "Step 14: Copying workflow files"
+log_step "Step 15: Copying workflow files"
 mkdir -p ~/ComfyUI/user
 cp -ru ~/NLBAging/workflows ~/ComfyUI/user/
 
 ########################################
-log_step "Step 15: Setting up shared_comfy_data folder"
+log_step "Step 16: Setting up shared_comfy_data folder"
 if [ ! -d "$SHARED_DIR" ]; then
   run_in_bg "mkdir -p $SHARED_DIR"
   run_in_bg "chown admin:admin $SHARED_DIR"
@@ -137,12 +142,12 @@ if [ ! -f "$SHARED_DIR/latest_aged_url.txt" ]; then
 fi
 
 ########################################
-log_step "Step 16: Setting script permissions"
+log_step "Step 17: Setting script permissions"
 chmod +x ~/ComfyUI/LinuxOS/reset_and_run.sh
 chmod +x ~/ComfyUI/LinuxOS/watch_input_and_run.sh
 
 ########################################
-log_step "Step 17: Starting ComfyUI"
+log_step "Step 18: Starting ComfyUI"
 cd ~/ComfyUI/LinuxOS
 ./reset_and_run.sh &
 
