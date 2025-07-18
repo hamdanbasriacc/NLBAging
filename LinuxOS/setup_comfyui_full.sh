@@ -79,7 +79,10 @@ python -c "import deepface" &>/dev/null || run_in_bg "pip install deepface"
 python -c "import tf_keras" &>/dev/null || run_in_bg "pip install tf-keras"
 
 ########################################
-log_step "Step 8: Running ComfyUI once"
+log_step "Step 8: Cloning ComfyUI if missing and running once"
+if [ ! -d "$COMFYUI_DIR/.git" ]; then
+  git clone https://github.com/comfyanonymous/ComfyUI.git $COMFYUI_DIR
+fi
 cd $COMFYUI_DIR
 python main.py &
 sleep 5
@@ -102,9 +105,8 @@ if ! gcloud config list account --quiet &>/dev/null; then
 fi
 
 ########################################
-log_step "Step 11: Cloning repositories"
+log_step "Step 11: Cloning NLBAging repo"
 cd ~
-[ ! -d "ComfyUI" ] && run_in_bg "git clone https://github.com/comfyanonymous/ComfyUI.git"
 [ ! -d "NLBAging" ] && run_in_bg "git clone https://github.com/hamdanbasriacc/NLBAging.git"
 
 ########################################
