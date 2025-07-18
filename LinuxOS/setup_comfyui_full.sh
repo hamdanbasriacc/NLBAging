@@ -77,6 +77,7 @@ log_step "Step 6: Installing ComfyUI dependencies"
 pip install --upgrade pip
 [ -f "$COMFYUI_DIR/requirements.txt" ] && pip install -r "$COMFYUI_DIR/requirements.txt"
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install watchdog
 
 ########################################
 log_step "Step 7: Installing DeepFace + tf-keras"
