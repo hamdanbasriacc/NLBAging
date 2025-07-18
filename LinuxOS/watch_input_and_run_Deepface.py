@@ -66,14 +66,19 @@ def detect_ethnicity_from_image(image_path):
         print(f"🎯 Detected age from DeepFace: {age}")
 
         # Add age based on condition
-        if age < 20:
+        if age < 15:
+            predicted_age = 20
+        elif 15 <= age < 20:
+            predicted_age = 25
+        elif 20 <= age < 30:
+            predicted_age = 40
+        elif 30 <= age < 40:
             predicted_age = age + 15
-        elif age < 30:
-            predicted_age = age + 10
-        elif age > 60:
+        elif 40 <= age <= 50:
             predicted_age = age + 5
         else:
-            predicted_age = age + 8  # Optional: default if not matching above
+            predicted_age = 55  # Force to 55 for anything over 50
+
 
         print(f"📈 Adjusted target age: {predicted_age}")
 
