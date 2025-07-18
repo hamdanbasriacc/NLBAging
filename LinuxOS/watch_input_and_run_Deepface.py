@@ -195,13 +195,20 @@ def get_target_url_for_file(filename):
 
 
 
-def is_file_stable(filepath):
+def is_file_stable(filepath, wait=2):
     try:
         size1 = os.path.getsize(filepath)
-        time.sleep(STABILITY_WAIT)
+        time.sleep(wait)
         size2 = os.path.getsize(filepath)
-        return size1 == size2
-    except Exception:
+        if size1 != size2:
+            return False
+
+        # Try opening and verifying image
+        with Image.open(filepath) as img:
+            img.verify()  # This checks integrity without loading pixels
+        return True
+    except Exception as e:
+        logging.warning(f"⚠️ Image at {filepath} failed stability check: {e}")
         return False
 
 def upload_image(image_path, target_url, max_retries=3):
