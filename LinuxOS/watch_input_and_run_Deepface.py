@@ -60,8 +60,11 @@ def detect_ethnicity_from_image(image_path):
     try:
         analysis = DeepFace.analyze(img_path=image_path, actions=['race', 'age'], enforce_detection=False)
         dominant = analysis[0]['dominant_race'].lower()
-        age = int(analysis[0]['age'])  # DeepFace returns float, convert to int
-        predicted_age = age + 15
+        age = int(analysis[0]['age'])  # convert from float
+
+        print(f"🎯 Detected age from DeepFace: {age}")
+
+        predicted_age = age + 5
 
         ethnicity_map = {
             'asian': 'Southeast Asian',
@@ -73,6 +76,7 @@ def detect_ethnicity_from_image(image_path):
     except Exception as e:
         logging.warning(f"⚠️ DeepFace failed to analyze image: {e}")
         return 'Southeast Asian', 40  # fallback
+
 
 
 
@@ -107,7 +111,7 @@ def update_workflow(image_name):
                 scale_by_value = 1.0
 
         print(f"🖼️ Image resolution (normalized): {short}x{long_} → scale_by = {scale_by_value}")
-        print(f"🎂 Age + 15 = {predicted_age}")
+        print(f"🎂 Age + 5 = {predicted_age}")
     except Exception as e:
         logging.warning(f"⚠️ Could not read image size: {e}")
         scale_by_value = 1.0  # fallback default
