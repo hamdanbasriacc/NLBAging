@@ -60,11 +60,22 @@ def detect_ethnicity_from_image(image_path):
     try:
         analysis = DeepFace.analyze(img_path=image_path, actions=['race', 'age'], enforce_detection=False)
         dominant = analysis[0]['dominant_race'].lower()
-        age = int(analysis[0]['age'])  # convert from float
+        age = int(analysis[0]['age'])  # DeepFace returns float, so convert to int
 
+        # Log original detected age
         print(f"🎯 Detected age from DeepFace: {age}")
 
-        predicted_age = age + 5
+        # Add age based on condition
+        if age < 20:
+            predicted_age = age + 15
+        elif age < 30:
+            predicted_age = age + 10
+        elif age > 60:
+            predicted_age = age + 5
+        else:
+            predicted_age = age + 8  # Optional: default if not matching above
+
+        print(f"📈 Adjusted target age: {predicted_age}")
 
         ethnicity_map = {
             'asian': 'Southeast Asian',
@@ -72,13 +83,11 @@ def detect_ethnicity_from_image(image_path):
             'white': 'Malay'
         }
 
-        return ethnicity_map.get(dominant, 'Southeast Asian'), predicted_age
+        return ethnicity_map.get(dominant, 'Southeast Asian'), predicted_age, age
+
     except Exception as e:
         logging.warning(f"⚠️ DeepFace failed to analyze image: {e}")
-        return 'Southeast Asian', 40  # fallback
-
-
-
+        return 'Southeast Asian', 40, 25  # fallback: predicted age + dummy actual age
 
 def detect_gender_from_filename(filename):
     lower = filename.lower()
@@ -91,7 +100,7 @@ def detect_gender_from_filename(filename):
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
-    ethnicity, predicted_age = detect_ethnicity_from_image(image_path)
+    ethnicity, predicted_age, original_age = detect_ethnicity_from_image(image_path)
 
         # Determine scale_by value based on normalized image resolution
     try:
@@ -111,7 +120,7 @@ def update_workflow(image_name):
                 scale_by_value = 1.0
 
         print(f"🖼️ Image resolution (normalized): {short}x{long_} → scale_by = {scale_by_value}")
-        print(f"🎂 Age + 5 = {predicted_age}")
+        print(f"🎯 Detected age: {original_age} → Injected age: {predicted_age}")
     except Exception as e:
         logging.warning(f"⚠️ Could not read image size: {e}")
         scale_by_value = 1.0  # fallback default
