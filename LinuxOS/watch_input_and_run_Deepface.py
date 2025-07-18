@@ -58,25 +58,22 @@ def wait_for_comfyui_server(timeout=300):
 
 def detect_ethnicity_from_image(image_path):
     try:
-        analysis = DeepFace.analyze(img_path=image_path, actions=['race'], enforce_detection=False)
+        analysis = DeepFace.analyze(img_path=image_path, actions=['race', 'age'], enforce_detection=False)
         dominant = analysis[0]['dominant_race'].lower()
+        age = int(analysis[0]['age'])  # DeepFace returns float, convert to int
+        predicted_age = age + 15
 
-        # Map DeepFace's result to more region-specific descriptors
         ethnicity_map = {
             'asian': 'Southeast Asian',
-            'indian': 'Indian Malaysian',
-            'white': 'Malay',
-            'latino hispanic': 'brown-skinned Malay',
-            'black': 'dark-skinned Malay',
-            'middle eastern': 'brown-skinned Malay'
+            'indian': 'Indian',
+            'white': 'Malay'
         }
 
-
-
-        return ethnicity_map.get(dominant, 'Southeast Asian')
+        return ethnicity_map.get(dominant, 'Southeast Asian'), predicted_age
     except Exception as e:
         logging.warning(f"⚠️ DeepFace failed to analyze image: {e}")
-        return 'Southeast Asian'
+        return 'Southeast Asian', 40  # fallback
+
 
 
 def detect_gender_from_filename(filename):
@@ -90,20 +87,30 @@ def detect_gender_from_filename(filename):
 def update_workflow(image_name):
     image_path = os.path.join(INPUT_DIR, image_name)
     gender = detect_gender_from_filename(image_name)
-    ethnicity = detect_ethnicity_from_image(image_path)
+    ethnicity, predicted_age = detect_ethnicity_from_image(image_path)
 
-    # Determine scale_by value based on image resolution
+        # Determine scale_by value based on normalized image resolution
     try:
         with Image.open(image_path) as img:
             width, height = img.size
-            if width < 480 and height < 640:
-                scale_by_value = 2
+            short, long_ = sorted((width, height))  # normalize orientation
+
+            if short < 480 and long_ < 640:
+                scale_by_value = 3.0
+            elif short < 720 and long_ < 1080:
+                scale_by_value = 2.7
+            elif short < 900 and long_ < 1350:
+                scale_by_value = 2.3
+            elif short < 1080 and long_ < 1920:
+                scale_by_value = 2.0
             else:
-                scale_by_value = 1
-        print(f"🖼️ Image resolution: {width}x{height} → scale_by = {scale_by_value}")
+                scale_by_value = 1.0
+
+        print(f"🖼️ Image resolution (normalized): {short}x{long_} → scale_by = {scale_by_value}")
+        print(f"🎂 Age + 15 = {predicted_age}")
     except Exception as e:
         logging.warning(f"⚠️ Could not read image size: {e}")
-        scale_by_value = 1  # fallback to default
+        scale_by_value = 1.0  # fallback default
 
     if gender:
         print(f"🧠 Detected gender: {gender}")
@@ -131,6 +138,8 @@ def update_workflow(image_name):
                             prompt_text = prompt_text.replace("{gender}", gender)
                         if "{ethnicity}" in prompt_text and ethnicity:
                             prompt_text = prompt_text.replace("{ethnicity}", ethnicity)
+                        if "{age}" in prompt_text:
+                            prompt_text = prompt_text.replace("{age}", str(predicted_age))
                         node["inputs"]["text"] = prompt_text
 
             # Inject scale_by value based on resolution

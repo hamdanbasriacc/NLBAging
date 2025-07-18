@@ -103,7 +103,7 @@
   },
   "10": {
     "inputs": {
-      "text": "Portrait of the same {ethnicity} {gender} person, make the person aged 55 years, slight sagging in cheeks, realistic lighting, neutral background, high facial similarity to original, older eyes, calm confident expression, subtle visible old skin texture and pores, graying hair, smiling, high contrast, clean face, no bindi, no traditional makeup, no cultural markings, no teeth modern elderly appearance. Hyperealistic",
+      "text": "Portrait of the same {ethnicity} {gender} person, make the person aged {age} years, slight sagging in cheeks, realistic lighting, neutral background, high facial similarity to original, older eyes, calm confident expression, subtle visible old skin texture and pores, graying hair, smiling, high contrast, clean face, no bindi, no traditional makeup, no cultural markings, no teeth modern elderly appearance. Hyperealistic",
       "clip": ["6", 1]
     },
     "class_type": "CLIPTextEncode",
