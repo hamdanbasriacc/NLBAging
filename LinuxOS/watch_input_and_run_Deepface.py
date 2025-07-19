@@ -263,6 +263,15 @@ def wait_for_output_rename_and_upload(input_filename):
         if candidates:
             output_file = candidates[0]
             src = os.path.join(OUTPUT_DIR, output_file)
+
+            # Wait for stability with retry
+            for _ in range(3):  # Try 3 times with wait
+                if is_file_stable(src, wait=4):
+                    break
+                logging.info(f"⏳ Waiting for stable output file: {output_file}")
+            else:
+                logging.warning(f"⚠️ File {output_file} did not stabilize in time, proceeding anyway")
+
             dst = os.path.join(OUTPUT_DIR, cleaned_name)
 
             try:
