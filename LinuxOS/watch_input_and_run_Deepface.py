@@ -200,10 +200,16 @@ def is_file_stable(filepath, wait=4):
         size1 = os.path.getsize(filepath)
         time.sleep(wait)
         size2 = os.path.getsize(filepath)
-        return size1 == size2
+        if size1 != size2:
+            return False
+
+        time.sleep(wait)
+        size3 = os.path.getsize(filepath)
+        return size2 == size3
     except Exception as e:
-        logging.warning(f"⚠️ File at {filepath} failed size check: {e}")
+        logging.warning(f"⚠️ File at {filepath} failed size stability check: {e}")
         return False
+
 
 
 def upload_image(image_path, target_url, max_retries=3):
